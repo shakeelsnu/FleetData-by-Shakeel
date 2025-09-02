@@ -5,28 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Excel Search Dashboard</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #f0f8ff, #e6f7ff);
-      color: #333;
-      padding: 30px;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #f0f8ff, #e6f7ff); color: #333; padding: 30px; }
     h1 { color: #007acc; text-shadow: 1px 1px 2px #ccc; }
-    input[type="text"], input[type="password"] {
-      padding: 10px; margin: 10px 0; border: 2px solid #007acc;
-      border-radius: 5px; width: 300px;
-    }
-    button {
-      padding: 10px 15px; margin: 5px; border: none; border-radius: 5px;
-      background-color: #007acc; color: white; cursor: pointer;
-      box-shadow: 1px 1px 5px #aaa; transition: background-color 0.3s ease;
-    }
+    input[type="text"], input[type="password"] { padding: 10px; margin: 10px 0; border: 2px solid #007acc; border-radius: 5px; width: 300px; }
+    button { padding: 10px 15px; margin: 5px; border: none; border-radius: 5px; background-color: #007acc; color: white; cursor: pointer; box-shadow: 1px 1px 5px #aaa; transition: background-color 0.3s ease; }
     button:hover { background-color: #005f99; }
     .hidden { display: none; }
-    #results, #adminPanel {
-      margin-top: 20px; background-color: #f9f9f9; padding: 15px;
-      border-radius: 8px; box-shadow: 0 0 10px #ccc; overflow-x: auto;
-    }
+    #results, #adminPanel { margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px #ccc; overflow-x: auto; }
     table { min-width: 800px; width: 100%; border-collapse: collapse; margin-bottom: 10px; }
     th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
     th { background-color: #e0f0ff; font-weight: bold; }
@@ -41,9 +26,7 @@
 </head>
 <body>
   <h1>📊 Excel Search Dashboard By Shakeel</h1>
-
   <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
-
   <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
   <button onclick="performSearch()">Search</button>
   <button onclick="showAdminLogin()">Admin Mode</button>
@@ -81,11 +64,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script>
-    let excelData = []; // merged data from all files
+    let excelData = [];
     let searchLogs = [];
     const highlightColors = ["highlight-0", "highlight-1", "highlight-2", "highlight-3", "highlight-4", "highlight-5"];
 
-    // Load all Excel files from GitHub repo root
     async function loadExcelFilesFromGitHub() {
       try {
         const response = await fetch("https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/");
@@ -104,9 +86,7 @@
             const rows = XLSX.utils.sheet_to_json(sheet);
             excelData = excelData.concat(rows);
             loadedNames.push(file.name);
-          } catch (err) {
-            console.error("Failed loading:", file.name, err);
-          }
+          } catch (err) { console.error("Failed loading:", file.name, err); }
         }
 
         document.getElementById("excelUploadDate").innerText = loadedNames.length > 0 ? loadedNames.join(", ") + " loaded at " + new Date().toLocaleString() : "❌ No Excel files found";
@@ -117,44 +97,25 @@
     }
 
     async function getClientIP() {
-      try {
-        const response = await fetch("https://api.ipify.org?format=json");
-        const data = await response.json();
-        return data.ip;
-      } catch (e) { return "IP not available"; }
+      try { const response = await fetch("https://api.ipify.org?format=json"); const data = await response.json(); return data.ip; } catch (e) { return "IP not available"; }
     }
-
     function getDeviceName() { return navigator.userAgent || "Device name not available"; }
 
     async function performSearch() {
       const input = document.getElementById("searchInput").value.trim();
       const resultText = document.getElementById("resultText");
       const resultsContainer = document.getElementById("results");
-
-      if (!input) {
-        resultText.innerHTML = "<p>Please type something to search.</p>";
-        resultsContainer.classList.remove("hidden");
-        document.getElementById("totalMatches").innerText = "0";
-        document.getElementById("perTermMatches").innerText = "";
-        return;
-      }
+      if (!input) { resultText.innerHTML = "<p>Please type something to search.</p>"; resultsContainer.classList.remove("hidden"); document.getElementById("totalMatches").innerText = "0"; document.getElementById("perTermMatches").innerText = ""; return; }
 
       const terms = input.split(",").map(term => term.trim().toLowerCase());
+      if (excelData.length === 0) { resultText.innerHTML = "<p>No data loaded from GitHub.</p>"; resultsContainer.classList.remove("hidden"); return; }
 
-      if (excelData.length === 0) {
-        resultText.innerHTML = "<p>No data loaded from GitHub.</p>";
-        resultsContainer.classList.remove("hidden");
-        return;
-      }
-
-      let headers = Object.keys(excelData[0]);
-      let tableHtml = `<table><thead><tr><th>Line No</th>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>`;
+      let tableHtml = `<table><thead><tr><th>Line No</th>${Object.keys(excelData[0]).map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>`;
       let totalMatches = 0;
       const matchesPerTerm = new Map();
-      let lineNo = 0;
+      let lineNo = 1;
 
       excelData.forEach(row => {
-        lineNo++;
         let rowMatched = false;
         let rowHtml = `<tr><td>${lineNo}</td>`;
         Object.values(row).forEach(val => {
@@ -171,7 +132,7 @@
           rowHtml += `<td>${cell}</td>`;
         });
         rowHtml += "</tr>";
-        if (rowMatched) tableHtml += rowHtml;
+        if (rowMatched) { tableHtml += rowHtml; lineNo++; }
       });
 
       tableHtml += "</tbody></table>";
@@ -184,9 +145,7 @@
           termStrings.push(`<span class='${colorClass}'><b>${term}</b></span>: ${count}`);
         });
         document.getElementById("perTermMatches").innerHTML = "Matches per keyword: " + termStrings.join(", ");
-      } else {
-        document.getElementById("perTermMatches").innerHTML = "No keywords matched.";
-      }
+      } else { document.getElementById("perTermMatches").innerHTML = "No keywords matched."; }
 
       resultText.innerHTML = totalMatches > 0 ? tableHtml : "<p>No matches found.</p>";
       resultsContainer.classList.remove("hidden");
@@ -196,64 +155,16 @@
       searchLogs.push({ ip, device, time: new Date().toLocaleString(), query: input });
     }
 
-    function exportToExcel() {
-      const allTables = document.querySelectorAll("#resultText table");
-      if (allTables.length === 0) { alert("No results to export."); return; }
-      const workbook = XLSX.utils.book_new();
-      allTables.forEach((table, index) => {
-        const worksheet = XLSX.utils.table_to_sheet(table);
-        XLSX.utils.book_append_sheet(workbook, worksheet, `Results Sheet ${index+1}`);
-      });
-      XLSX.writeFile(workbook, "search_results.xlsx");
-    }
+    function exportToExcel() { const allTables = document.querySelectorAll("#resultText table"); if (allTables.length === 0) { alert("No results to export."); return; } const workbook = XLSX.utils.book_new(); allTables.forEach((table, index) => { const worksheet = XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(workbook, worksheet, `Results Sheet ${index+1}`); }); XLSX.writeFile(workbook, "search_results.xlsx"); }
 
-    function printResults() {
-      const printWindow = window.open("", "", "width=800,height=600");
-      const content = document.getElementById("resultText").innerHTML;
-      printWindow.document.write(`
-        <html><head><title>Search Results</title><style>
-          table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background-color: #e0f0ff; font-weight: bold; }
-          .highlight-0 { background-color: #ffeb3b; font-weight: bold; }
-          .highlight-1 { background-color: #8bc34a; font-weight: bold; }
-          .highlight-2 { background-color: #03a9f4; font-weight: bold; }
-          .highlight-3 { background-color: #e91e63; font-weight: bold; }
-          .highlight-4 { background-color: #ff9800; font-weight: bold; }
-          .highlight-5 { background-color: #9c27b0; font-weight: bold; }
-        </style></head><body><h3>Search Results</h3>${content}</body></html>`);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-    }
+    function printResults() { const printWindow = window.open("", "", "width=800,height=600"); const content = document.getElementById("resultText").innerHTML; printWindow.document.write(`<html><head><title>Search Results</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background-color: #e0f0ff; font-weight: bold; } .highlight-0 { background-color: #ffeb3b; font-weight: bold; } .highlight-1 { background-color: #8bc34a; font-weight: bold; } .highlight-2 { background-color: #03a9f4; font-weight: bold; } .highlight-3 { background-color: #e91e63; font-weight: bold; } .highlight-4 { background-color: #ff9800; font-weight: bold; } .highlight-5 { background-color: #9c27b0; font-weight: bold; }</style></head><body><h3>Search Results</h3>${content}</body></html>`); printWindow.document.close(); printWindow.focus(); printWindow.print(); }
 
     function showAdminLogin() { document.getElementById("adminLogin").classList.remove("hidden"); }
+    function checkAdminLogin() { const user = document.getElementById("adminUser").value.trim().toLowerCase(); const pass = document.getElementById("adminPass").value.trim(); if (user === "shak" && pass === "9332") { document.getElementById("adminLogin").classList.add("hidden"); document.getElementById("adminPanel").classList.remove("hidden"); loadLogs(); } else { alert("Invalid credentials!"); } }
 
-    function checkAdminLogin() {
-      const user = document.getElementById("adminUser").value.trim().toLowerCase();
-      const pass = document.getElementById("adminPass").value.trim();
-      if (user === "shak" && pass === "9332") {
-        document.getElementById("adminLogin").classList.add("hidden");
-        document.getElementById("adminPanel").classList.remove("hidden");
-        loadLogs();
-      } else { alert("Invalid credentials!"); }
-    }
+    function loadLogs() { const logTable = document.getElementById("logTable"); logTable.innerHTML = ""; searchLogs.forEach(log => { logTable.innerHTML += `<tr><td>${log.ip}</td><td>${log.device}</td><td>${log.time}</td><td>${log.query}</td></tr>`; }); }
 
-    function loadLogs() {
-      const logTable = document.getElementById("logTable");
-      logTable.innerHTML = "";
-      searchLogs.forEach(log => {
-        logTable.innerHTML += `<tr><td>${log.ip}</td><td>${log.device}</td><td>${log.time}</td><td>${log.query}</td></tr>`;
-      });
-    }
-
-    window.onload = function() {
-      document.getElementById("lastUpdated").innerText = new Date().toLocaleString();
-      loadExcelFilesFromGitHub();
-      document.getElementById("searchInput").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") performSearch();
-      });
-    };
+    window.onload = function() { document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); loadExcelFilesFromGitHub(); document.getElementById("searchInput").addEventListener("keypress", function(e) { if (e.key === "Enter") performSearch(); }); };
   </script>
 </body>
 </html>
