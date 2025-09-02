@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <title>Excel Data Viewer</title>
 
-  <!-- jQuery + DataTables CSS -->
+  <!-- jQuery + DataTables -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 
-  <!-- SheetJS (to read Excel) -->
+  <!-- SheetJS (Excel parser) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -35,15 +35,20 @@
   <script>
     async function loadExcel() {
       try {
-        const response = await fetch('data.xlsx'); // Excel file in repo
+        // Load Excel file from repo
+        const response = await fetch('data.xlsx');
+        if (!response.ok) {
+          throw new Error("Excel file not found");
+        }
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
+        // Take first sheet
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        console.log("jsonData:", jsonData); // Debug: see data in console
+        console.log("jsonData:", jsonData); // Debug in console
 
         if (jsonData.length === 0) {
           document.getElementById("excelTable").innerHTML = "<p>No data found in Excel file.</p>";
@@ -69,12 +74,14 @@
         });
         tbody += "</tbody>";
 
+        // Insert table
         document.getElementById("excelTable").innerHTML = thead + tbody;
 
-        // Activate DataTables (search, sort, filter)
+        // Enable DataTables (search/sort/filter)
         $('#excelTable').DataTable();
       } catch (err) {
         console.error("Error loading Excel file:", err);
+        document.getElementById("excelTable").innerHTML = "<p>❌ Could not load Excel file.</p>";
       }
     }
 
