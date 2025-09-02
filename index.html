@@ -127,7 +127,7 @@
     // Load Excel file from GitHub (using raw link)
     async function loadExcelFromGitHub() {
       try {
-        const response = await fetch("https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/data.xlsx");
+        const response = await fetch("https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/fleetdata.xlsx");
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
