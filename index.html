@@ -14,56 +14,76 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Arial, sans-serif;
       margin: 30px;
-      background: #f9f9f9;
+      background: linear-gradient(to right, #eef2f3, #dfe9f3);
     }
     h2 {
       text-align: center;
       margin-bottom: 20px;
+      color: #2c3e50;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    #message {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+    table.dataTable thead {
+      background-color: #3498db;
+      color: white;
+    }
+    table.dataTable tbody tr:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #eaf2f8;
+    }
+    table.dataTable tbody tr:hover {
+      background-color: #d6eaf8;
+    }
+    .dataTables_filter {
+      text-align: center !important;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+      border: 2px solid #3498db;
+      border-radius: 6px;
+      padding: 5px;
+      font-size: 14px;
+      outline: none;
     }
   </style>
 </head>
 <body>
   <h2>📊 Excel Data Viewer</h2>
-  <table id="excelTable" class="display"></table>
+  <div id="message">🔍 Type something in the search box to view results</div>
+  <table id="excelTable" class="display" style="display:none;"></table>
 
   <script>
     async function loadExcel() {
       try {
-        // Load Excel file from repo
         const response = await fetch('data.xlsx');
-        if (!response.ok) {
-          throw new Error("Excel file not found");
-        }
+        if (!response.ok) throw new Error("Excel file not found");
+
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
-        // Take first sheet
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        console.log("jsonData:", jsonData); // Debug in console
-
         if (jsonData.length === 0) {
-          document.getElementById("excelTable").innerHTML = "<p>No data found in Excel file.</p>";
+          document.getElementById("message").innerText = "❌ No data found in Excel file.";
           return;
         }
 
         const headers = jsonData[0];
         const rows = jsonData.slice(1);
 
-        // Build table header
         let thead = "<thead><tr>";
         headers.forEach(h => { thead += `<th>${h}</th>`; });
         thead += "</tr></thead>";
 
-        // Build table rows
         let tbody = "<tbody>";
         rows.forEach(r => {
           tbody += "<tr>";
@@ -74,14 +94,28 @@
         });
         tbody += "</tbody>";
 
-        // Insert table
         document.getElementById("excelTable").innerHTML = thead + tbody;
 
-        // Enable DataTables (search/sort/filter)
-        $('#excelTable').DataTable();
+        // Initialize DataTable
+        const table = $('#excelTable').DataTable();
+
+        // Hide table initially
+        $('#excelTable').hide();
+
+        // Watch for typing in search box
+        $('.dataTables_filter input').on('input', function () {
+          if (this.value.trim().length > 0) {
+            $('#excelTable').show();
+            $('#message').hide();
+          } else {
+            $('#excelTable').hide();
+            $('#message').show();
+          }
+        });
+
       } catch (err) {
         console.error("Error loading Excel file:", err);
-        document.getElementById("excelTable").innerHTML = "<p>❌ Could not load Excel file.</p>";
+        document.getElementById("message").innerText = "❌ Could not load Excel file.";
       }
     }
 
