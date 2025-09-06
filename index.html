@@ -6,57 +6,87 @@
   <title>Excel Search Dashboard</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #f0f8ff, #e6f7ff); color: #333; padding: 30px; }
-    h1 { color: #007acc; text-shadow: 1px 1px 2px #ccc; }
+    h1 { color: #007acc; text-shadow: 1px 1px 2px #ccc; margin-bottom: 5px; }
+    .author { color: #888; font-size: 0.8em; margin-top: 0; margin-bottom: 20px; }
     input[type="text"], input[type="password"] { padding: 10px; margin: 10px 0; border: 2px solid #007acc; border-radius: 5px; width: 300px; }
     button { padding: 10px 15px; margin: 5px; border: none; border-radius: 5px; background-color: #007acc; color: white; cursor: pointer; box-shadow: 1px 1px 5px #aaa; transition: background-color 0.3s ease; }
     button:hover { background-color: #005f99; }
     .hidden { display: none; }
-    #results, #adminPanel { margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px #ccc; overflow-x: auto; }
+    #results, #adminPanel, #adminLogin { margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px #ccc; overflow-x: auto; }
     table { min-width: 800px; width: 100%; border-collapse: collapse; margin-bottom: 10px; }
     th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background-color: #e0f0ff; font-weight: bold; }
+    th { background-color: #e0f0ff; font-weight: bold; cursor: pointer; position: relative; }
+    th:hover { background-color: #c9e5ff; }
+    th::after { content: '↕'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.8em; opacity: 0.5; }
+    th.asc::after { content: '↑'; opacity: 1; }
+    th.desc::after { content: '↓'; opacity: 1; }
     #timestamp { margin-top: 30px; font-style: italic; color: #555; }
-    .highlight-0 { background-color: #ffeb3b; font-weight: bold; }
-    .highlight-1 { background-color: #8bc34a; font-weight: bold; }
-    .highlight-2 { background-color: #03a9f4; font-weight: bold; }
-    .highlight-3 { background-color: #e91e63; font-weight: bold; }
-    .highlight-4 { background-color: #ff9800; font-weight: bold; }
-    .highlight-5 { background-color: #9c27b0; font-weight: bold; }
+    .error { color: red; margin-top: 5px; }
+    /* Improved highlight colors - brighter but text remains visible */
+    .highlight-0 { background-color: #FFFF00; font-weight: bold; }  /* Bright Yellow */
+    .highlight-1 { background-color: #00FF00; font-weight: bold; }  /* Bright Green */
+    .highlight-2 { background-color: #00FFFF; font-weight: bold; }  /* Bright Cyan */
+    .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; }  /* Bright Magenta */
+    .highlight-4 { background-color: #FF8000; font-weight: bold; }  /* Bright Orange */
+    .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }  /* Bright Pink */
   </style>
 </head>
 <body>
-  <h1>📊 Excel Search Dashboard By Shakeel</h1>
-  <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
-  <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
-  <button onclick="performSearch()">Search</button>
-  <button onclick="showAdminLogin()">Admin Mode</button>
+  <h1>📊 Excel Search Dashboard</h1>
+  <p class="author">by Shakeel</p>
+  
+  <!-- User Authentication Section -->
+  <div id="userAuth">
+    <h3>👤 Please Enter Your Name to Continue</h3>
+    <input type="text" id="userName" placeholder="Enter your name (letters only)..." />
+    <div id="nameError" class="error hidden">Please enter a valid name (letters only, no numbers or special characters)</div>
+    <button onclick="setUserName()">Continue</button>
+    <button onclick="toggleAdminLogin()">Admin Mode</button>
+  </div>
+  
+  <div id="mainContent" class="hidden">
+    <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
+    <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
+    <button onclick="performSearch()">Search</button>
+    <button onclick="toggleAdminLogin()">Admin Mode</button>
+    <button onclick="logout()" style="background-color: #ff6b6b;">Logout</button>
 
-  <div id="results" class="hidden">
-    <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
-    <p>Total Matches: <span id="totalMatches">0</span></p>
-    <p id="perTermMatches"></p>
-    <h3>🔎 Search Results</h3>
-    <div id="resultText"></div>
-    <div id="exportButtons" style="margin-top: 15px;">
-      <button onclick="exportToExcel()">📊 Export to Excel</button>
-      <button onclick="printResults()">🖨️ Download as PDF</button>
+    <div id="results" class="hidden">
+      <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
+      <p>Total Matches: <span id="totalMatches">0</span></p>
+      <p id="perTermMatches"></p>
+      <h3>🔎 Search Results</h3>
+      <div id="resultText"></div>
+      <div id="exportButtons" style="margin-top: 15px;">
+        <button onclick="exportToExcel()">📊 Export to Excel</button>
+        <button onclick="printResults()">🖨️ Download as PDF</button>
+      </div>
     </div>
   </div>
 
-  <!-- Admin Login -->
+  <!-- Admin Login - Now appears alongside content -->
   <div id="adminLogin" class="hidden">
     <h3>🔐 Admin Login</h3>
     <input type="text" id="adminUser" placeholder="Username" /><br>
     <input type="password" id="adminPass" placeholder="Password" /><br>
     <button onclick="checkAdminLogin()">Login</button>
+    <button onclick="toggleAdminLogin()" style="background-color: #ff6b6b;">Cancel</button>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- Admin Panel - Now appears alongside content -->
   <div id="adminPanel" class="hidden">
-    <h3>📋 Admin Panel - Search Logs</h3>
+    <h3>📋 Admin Panel - User Activity Logs</h3>
+    <button onclick="hideAdminPanel()" style="background-color: #ff6b6b; margin-bottom: 15px;">Close Admin Panel</button>
     <table>
       <thead>
-        <tr><th>IP Address</th><th>Device Name</th><th>Date & Time</th><th>Search Query</th></tr>
+        <tr>
+          <th>User Name</th>
+          <th>Login Time</th>
+          <th>Logout Time</th>
+          <th>Duration</th>
+          <th>Search Count</th>
+          <th>Last Search</th>
+        </tr>
       </thead>
       <tbody id="logTable"></tbody>
     </table>
@@ -66,7 +96,112 @@
   <script>
     let excelData = [];
     let searchLogs = [];
+    let userSessions = [];
+    let currentResults = [];
+    let currentUserName = "";
+    let currentUserLoginTime = null;
+    let userSearchCount = 0;
+    let userLastSearch = "";
     const highlightColors = ["highlight-0", "highlight-1", "highlight-2", "highlight-3", "highlight-4", "highlight-5"];
+    let sortColumn = null;
+    let sortDirection = 'asc';
+
+    function validateName(name) {
+      // Only allow letters and spaces, no numbers or special characters
+      return /^[A-Za-z\s]+$/.test(name);
+    }
+
+    function setUserName() {
+      const userName = document.getElementById("userName").value.trim();
+      const nameError = document.getElementById("nameError");
+      
+      if (!userName) {
+        nameError.textContent = "Please enter your name";
+        nameError.classList.remove("hidden");
+        return;
+      }
+      
+      if (!validateName(userName)) {
+        nameError.textContent = "Please enter a valid name (letters only, no numbers or special characters)";
+        nameError.classList.remove("hidden");
+        return;
+      }
+      
+      nameError.classList.add("hidden");
+      currentUserName = userName;
+      currentUserLoginTime = new Date();
+      userSearchCount = 0;
+      userLastSearch = "";
+      
+      document.getElementById("userAuth").classList.add("hidden");
+      document.getElementById("mainContent").classList.remove("hidden");
+      
+      // Store user session
+      userSessions.push({
+        user: userName,
+        loginTime: currentUserLoginTime,
+        logoutTime: null,
+        searchCount: 0,
+        lastSearch: ""
+      });
+      
+      // Focus on search input for immediate use
+      document.getElementById("searchInput").focus();
+    }
+    
+    function logout() {
+      if (currentUserName && currentUserLoginTime) {
+        const logoutTime = new Date();
+        const duration = Math.round((logoutTime - currentUserLoginTime) / 1000); // in seconds
+        
+        // Update the user session with logout time
+        const currentSession = userSessions.find(session => 
+          session.user === currentUserName && session.logoutTime === null
+        );
+        
+        if (currentSession) {
+          currentSession.logoutTime = logoutTime;
+          currentSession.duration = duration;
+          currentSession.searchCount = userSearchCount;
+          currentSession.lastSearch = userLastSearch;
+        }
+      }
+      
+      currentUserName = "";
+      currentUserLoginTime = null;
+      userSearchCount = 0;
+      userLastSearch = "";
+      
+      document.getElementById("userAuth").classList.remove("hidden");
+      document.getElementById("mainContent").classList.add("hidden");
+      document.getElementById("adminLogin").classList.add("hidden");
+      document.getElementById("adminPanel").classList.add("hidden");
+      document.getElementById("userName").value = "";
+      document.getElementById("userName").focus();
+    }
+
+    function toggleAdminLogin() {
+      const adminLogin = document.getElementById("adminLogin");
+      
+      if (adminLogin.classList.contains("hidden")) {
+        // Show admin login - don't hide other content
+        adminLogin.classList.remove("hidden");
+        
+        // Clear previous inputs
+        document.getElementById("adminUser").value = "";
+        document.getElementById("adminPass").value = "";
+        
+        // Focus on username field
+        document.getElementById("adminUser").focus();
+      } else {
+        // Hide admin login
+        adminLogin.classList.add("hidden");
+      }
+    }
+    
+    function hideAdminPanel() {
+      document.getElementById("adminPanel").classList.add("hidden");
+    }
 
     async function loadExcelFilesFromGitHub() {
       try {
@@ -102,6 +237,12 @@
     function getDeviceName() { return navigator.userAgent || "Device name not available"; }
 
     async function performSearch() {
+      // Check if user is logged in
+      if (!currentUserName) {
+        alert("Please enter your name to search.");
+        return;
+      }
+      
       const input = document.getElementById("searchInput").value.trim();
       const resultText = document.getElementById("resultText");
       const resultsContainer = document.getElementById("results");
@@ -110,16 +251,23 @@
       const terms = input.split(",").map(term => term.trim().toLowerCase());
       if (excelData.length === 0) { resultText.innerHTML = "<p>No data loaded from GitHub.</p>"; resultsContainer.classList.remove("hidden"); return; }
 
-      let tableHtml = `<table><thead><tr><th>Line No</th>${Object.keys(excelData[0]).map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>`;
+      currentResults = [];
       let totalMatches = 0;
       const matchesPerTerm = new Map();
       let lineNo = 1;
 
       excelData.forEach(row => {
         let rowMatched = false;
-        let rowHtml = `<tr><td>${lineNo}</td>`;
-        Object.values(row).forEach(val => {
-          let cell = String(val || "");
+        let formattedRow = { lineNo: lineNo };
+        let rowData = {};
+
+        // Add line number to row data
+        rowData['Line No'] = lineNo;
+        
+        Object.keys(row).forEach(key => {
+          let cell = String(row[key] || "");
+          let originalCell = cell;
+          
           terms.forEach((term, idx) => {
             const regex = new RegExp(`(${term})`, "gi");
             if (regex.test(cell)) {
@@ -129,13 +277,17 @@
               totalMatches++;
             }
           });
-          rowHtml += `<td>${cell}</td>`;
+          
+          rowData[key] = cell;
+          formattedRow[key] = originalCell; // Store original value for sorting
         });
-        rowHtml += "</tr>";
-        if (rowMatched) { tableHtml += rowHtml; lineNo++; }
+        
+        if (rowMatched) {
+          currentResults.push({ display: rowData, sortData: formattedRow, lineNo: lineNo });
+          lineNo++;
+        }
       });
 
-      tableHtml += "</tbody></table>";
       document.getElementById("totalMatches").innerText = totalMatches;
 
       if (matchesPerTerm.size > 0) {
@@ -147,24 +299,192 @@
         document.getElementById("perTermMatches").innerHTML = "Matches per keyword: " + termStrings.join(", ");
       } else { document.getElementById("perTermMatches").innerHTML = "No keywords matched."; }
 
-      resultText.innerHTML = totalMatches > 0 ? tableHtml : "<p>No matches found.</p>";
+      renderResultsTable();
       resultsContainer.classList.remove("hidden");
 
       const ip = await getClientIP();
       const device = getDeviceName();
-      searchLogs.push({ ip, device, time: new Date().toLocaleString(), query: input });
+      searchLogs.push({ user: currentUserName, ip, device, time: new Date().toLocaleString(), query: input });
+      
+      // Update user search stats
+      userSearchCount++;
+      userLastSearch = input;
     }
 
-    function exportToExcel() { const allTables = document.querySelectorAll("#resultText table"); if (allTables.length === 0) { alert("No results to export."); return; } const workbook = XLSX.utils.book_new(); allTables.forEach((table, index) => { const worksheet = XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(workbook, worksheet, `Results Sheet ${index+1}`); }); XLSX.writeFile(workbook, "search_results.xlsx"); }
+    function renderResultsTable() {
+      const resultText = document.getElementById("resultText");
+      
+      if (currentResults.length === 0) {
+        resultText.innerHTML = "<p>No matches found.</p>";
+        return;
+      }
+      
+      // Get column headers from first result
+      const headers = ['Line No', ...Object.keys(currentResults[0].sortData).filter(key => key !== 'lineNo')];
+      
+      let tableHtml = `<table><thead><tr>`;
+      headers.forEach(header => {
+        const isSorted = header === sortColumn;
+        const sortClass = isSorted ? (sortDirection === 'asc' ? 'asc' : 'desc') : '';
+        tableHtml += `<th onclick="sortTable('${header}')" class="${sortClass}">${header}</th>`;
+      });
+      tableHtml += `</tr></thead><tbody>`;
+      
+      currentResults.forEach(result => {
+        tableHtml += `<tr>`;
+        headers.forEach(header => {
+          if (header === 'Line No') {
+            tableHtml += `<td>${result.lineNo}</td>`;
+          } else {
+            tableHtml += `<td>${result.display[header] || ''}</td>`;
+          }
+        });
+        tableHtml += `</tr>`;
+      });
+      
+      tableHtml += `</tbody></table>`;
+      resultText.innerHTML = tableHtml;
+    }
 
-    function printResults() { const printWindow = window.open("", "", "width=800,height=600"); const content = document.getElementById("resultText").innerHTML; printWindow.document.write(`<html><head><title>Search Results</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background-color: #e0f0ff; font-weight: bold; } .highlight-0 { background-color: #ffeb3b; font-weight: bold; } .highlight-1 { background-color: #8bc34a; font-weight: bold; } .highlight-2 { background-color: #03a9f4; font-weight: bold; } .highlight-3 { background-color: #e91e63; font-weight: bold; } .highlight-4 { background-color: #ff9800; font-weight: bold; } .highlight-5 { background-color: #9c27b0; font-weight: bold; }</style></head><body><h3>Search Results</h3>${content}</body></html>`); printWindow.document.close(); printWindow.focus(); printWindow.print(); }
+    function sortTable(column) {
+      if (sortColumn === column) {
+        // Toggle direction if same column clicked again
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+      
+      currentResults.sort((a, b) => {
+        let valueA, valueB;
+        
+        if (column === 'Line No') {
+          valueA = a.lineNo;
+          valueB = b.lineNo;
+        } else {
+          valueA = a.sortData[column] || '';
+          valueB = b.sortData[column] || '';
+        }
+        
+        // Convert to numbers if possible for proper numeric sorting
+        if (!isNaN(valueA) && !isNaN(valueB) && valueA !== '' && valueB !== '') {
+          valueA = parseFloat(valueA);
+          valueB = parseFloat(valueB);
+        }
+        
+        if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+        if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+      
+      renderResultsTable();
+    }
 
-    function showAdminLogin() { document.getElementById("adminLogin").classList.remove("hidden"); }
-    function checkAdminLogin() { const user = document.getElementById("adminUser").value.trim().toLowerCase(); const pass = document.getElementById("adminPass").value.trim(); if (user === "shak" && pass === "9332") { document.getElementById("adminLogin").classList.add("hidden"); document.getElementById("adminPanel").classList.remove("hidden"); loadLogs(); } else { alert("Invalid credentials!"); } }
+    function exportToExcel() { 
+      if (currentResults.length === 0) { 
+        alert("No results to export."); 
+        return; 
+      } 
+      
+      const workbook = XLSX.utils.book_new(); 
+      const headers = ['Line No', ...Object.keys(currentResults[0].sortData).filter(key => key !== 'lineNo')];
+      
+      // Prepare data for export (using original values without HTML formatting)
+      const exportData = currentResults.map(result => {
+        const row = {'Line No': result.lineNo};
+        headers.forEach(header => {
+          if (header !== 'Line No') {
+            // Remove HTML tags for clean export
+            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+          }
+        });
+        return row;
+      });
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Search Results"); 
+      XLSX.writeFile(workbook, "search_results.xlsx"); 
+    }
 
-    function loadLogs() { const logTable = document.getElementById("logTable"); logTable.innerHTML = ""; searchLogs.forEach(log => { logTable.innerHTML += `<tr><td>${log.ip}</td><td>${log.device}</td><td>${log.time}</td><td>${log.query}</td></tr>`; }); }
+    function printResults() { 
+      const printWindow = window.open("", "", "width=800,height=600"); 
+      const content = document.getElementById("resultText").innerHTML; 
+      printWindow.document.write(`<html><head><title>Search Results</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background-color: #e0f0ff; font-weight: bold; } .highlight-0 { background-color: #FFFF00; font-weight: bold; } .highlight-1 { background-color: #00FF00; font-weight: bold; } .highlight-2 { background-color: #00FFFF; font-weight: bold; } .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; } .highlight-4 { background-color: #FF8000; font-weight: bold; } .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }</style></head><body><h3>Search Results</h3>${content}</body></html>`); 
+      printWindow.document.close(); 
+      printWindow.focus(); 
+      printWindow.print(); 
+    }
 
-    window.onload = function() { document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); loadExcelFilesFromGitHub(); document.getElementById("searchInput").addEventListener("keypress", function(e) { if (e.key === "Enter") performSearch(); }); };
+    function checkAdminLogin() { 
+      const user = document.getElementById("adminUser").value.trim(); 
+      const pass = document.getElementById("adminPass").value.trim(); 
+      
+      // Case-insensitive username check for "shakeel"
+      if (user.toLowerCase() === "shakeel" && pass === "9332") { 
+        document.getElementById("adminLogin").classList.add("hidden"); 
+        document.getElementById("adminPanel").classList.remove("hidden"); 
+        loadLogs(); 
+      } else { 
+        alert("Invalid credentials!"); 
+      } 
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return "N/A";
+      
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      if (hours > 0) {
+        return `${hours}h ${minutes}m ${secs}s`;
+      } else if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+      } else {
+        return `${secs}s`;
+      }
+    }
+
+    function loadLogs() { 
+      const logTable = document.getElementById("logTable"); 
+      logTable.innerHTML = ""; 
+      
+      userSessions.forEach(session => {
+        const loginTime = session.loginTime ? session.loginTime.toLocaleString() : "N/A";
+        const logoutTime = session.logoutTime ? session.logoutTime.toLocaleString() : "Still logged in";
+        const duration = session.duration ? formatDuration(session.duration) : "N/A";
+        const searchCount = session.searchCount || 0;
+        const lastSearch = session.lastSearch || "No searches";
+        
+        logTable.innerHTML += `
+          <tr>
+            <td>${session.user}</td>
+            <td>${loginTime}</td>
+            <td>${logoutTime}</td>
+            <td>${duration}</td>
+            <td>${searchCount}</td>
+            <td>${lastSearch}</td>
+          </tr>
+        `;
+      }); 
+    }
+
+    window.onload = function() { 
+      document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); 
+      loadExcelFilesFromGitHub(); 
+      
+      document.getElementById("userName").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") setUserName(); 
+      });
+      
+      document.getElementById("searchInput").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") performSearch(); 
+      }); 
+
+      document.getElementById("adminPass").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") checkAdminLogin(); 
+      }); 
+    };
   </script>
 </body>
 </html>
