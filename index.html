@@ -95,7 +95,7 @@
   <!-- Admin Login - Now appears alongside content -->
   <div id="adminLogin" class="hidden">
     <h3>🔐 Admin Login</h3>
-    <input type="text" id="adminUser" placeholder="Username" /><br>
+    <input type="text" id="adminUser" placeholder="Username" style="display: none;" />
     <input type="password" id="adminPass" placeholder="Password" /><br>
     <button onclick="checkAdminLogin()">Login</button>
     <button onclick="toggleAdminLogin()" style="background-color: #ff6b6b;">Cancel</button>
@@ -171,6 +171,11 @@
     let sortDirection = 'asc';
     let selectedLogs = new Set();
 
+    // Remove file extension from filename
+    function removeExtension(filename) {
+      return filename.replace(/\.[^/.]+$/, "");
+    }
+
     // Load file nicknames from localStorage or initialize empty object
     function loadFileNicknames() {
       const savedNicknames = localStorage.getItem('fileNicknames');
@@ -229,8 +234,8 @@
         const option = document.createElement("option");
         option.value = file.name;
         
-        // Use nickname if available, otherwise use filename
-        const displayName = fileNicknames[file.name] || file.name;
+        // Use nickname if available, otherwise use filename without extension
+        const displayName = fileNicknames[file.name] || removeExtension(file.name);
         option.textContent = displayName;
         
         fileSelect.appendChild(option);
@@ -245,7 +250,7 @@
       if (fileSelect.value === "all") {
         selectedFilesElement.textContent = "All files selected";
       } else if (fileSelect.value) {
-        const displayName = fileNicknames[fileSelect.value] || fileSelect.value;
+        const displayName = fileNicknames[fileSelect.value] || removeExtension(fileSelect.value);
         selectedFilesElement.textContent = `Selected: ${displayName}`;
       } else {
         selectedFilesElement.textContent = "No files selected";
@@ -267,7 +272,7 @@
         div.className = "file-nickname";
         
         const label = document.createElement("label");
-        label.textContent = file.name + ":";
+        label.textContent = removeExtension(file.name) + ":";
         label.style.minWidth = "150px";
         
         const input = document.createElement("input");
@@ -275,7 +280,7 @@
         input.className = "nickname-input";
         input.dataset.filename = file.name;
         input.value = fileNicknames[file.name] || "";
-        input.placeholder = "Enter nickname for " + file.name;
+        input.placeholder = "Enter nickname for " + removeExtension(file.name);
         
         div.appendChild(label);
         div.appendChild(input);
@@ -503,11 +508,11 @@
         adminLogin.classList.remove("hidden");
         
         // Clear previous inputs
-        document.getElementById("adminUser").value = "";
+        document.getElementById("adminUser").value = "shakeel"; // Pre-fill with username
         document.getElementById("adminPass").value = "";
         
-        // Focus on username field
-        document.getElementById("adminUser").focus();
+        // Focus on password field
+        document.getElementById("adminPass").focus();
       } else {
         // Hide admin login
         adminLogin.classList.add("hidden");
@@ -570,8 +575,8 @@
           const rowsWithSource = rows.map(row => ({ ...row, __sourceFile: file.name }));
           excelData = excelData.concat(rowsWithSource);
           
-          // Use nickname if available, otherwise use filename
-          const displayName = fileNicknames[file.name] || file.name;
+          // Use nickname if available, otherwise use filename without extension
+          const displayName = fileNicknames[file.name] || removeExtension(file.name);
           loadedNames.push(displayName);
         } catch (err) { 
           console.error("Failed loading:", file.name, err); 
@@ -640,9 +645,9 @@
         // Add line number to row data
         rowData['Line No'] = lineNo;
         
-        // Use nickname if available, otherwise use filename
+        // Use nickname if available, otherwise use filename without extension
         const sourceFileName = row.__sourceFile || 'Unknown';
-        const displaySource = fileNicknames[sourceFileName] || sourceFileName;
+        const displaySource = fileNicknames[sourceFileName] || removeExtension(sourceFileName);
         rowData['Source File'] = displaySource;
         
         Object.keys(row).forEach(key => {
@@ -813,11 +818,11 @@
     }
 
     function checkAdminLogin() { 
-      const user = document.getElementById("adminUser").value.trim(); 
+      const user = "shakeel"; // Hardcoded username (case-insensitive)
       const pass = document.getElementById("adminPass").value.trim(); 
       
       // Case-insensitive username check for "shakeel"
-      if (user.toLowerCase() === "shakeel" && pass === "9332") { 
+      if (pass === "9332") { 
         document.getElementById("adminLogin").classList.add("hidden"); 
         document.getElementById("adminPanel").classList.remove("hidden"); 
         loadLogs(); 
