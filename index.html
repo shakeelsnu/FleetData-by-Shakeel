@@ -5,23 +5,154 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Excel Search Dashboard</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #f0f8ff, #e6f7ff); color: #333; padding: 30px; }
-    h1 { color: #007acc; text-shadow: 1px 1px 2px #ccc; margin-bottom: 5px; }
-    .author { color: #888; font-size: 0.8em; margin-top: 0; margin-bottom: 20px; }
-    input[type="text"], input[type="password"], select { padding: 10px; margin: 10px 0; border: 2px solid #007acc; border-radius: 5px; width: 300px; }
-    button { padding: 10px 15px; margin: 5px; border: none; border-radius: 5px; background-color: #007acc; color: white; cursor: pointer; box-shadow: 1px 1px 5px #aaa; transition: background-color 0.3s ease; }
-    button:hover { background-color: #005f99; }
-    .hidden { display: none; }
-    #results, #adminPanel, #adminLogin { margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px #ccc; overflow-x: auto; }
-    table { min-width: 800px; width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background-color: #e0f0ff; font-weight: bold; cursor: pointer; position: relative; }
-    th:hover { background-color: #c9e5ff; }
-    th::after { content: '↕'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.8em; opacity: 0.5; }
-    th.asc::after { content: '↑'; opacity: 1; }
-    th.desc::after { content: '↓'; opacity: 1; }
-    #timestamp { margin-top: 30px; font-style: italic; color: #555; }
-    .error { color: red; margin-top: 5px; }
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      background: linear-gradient(to right, #f0f8ff, #e6f7ff); 
+      color: #333; 
+      padding: 15px; 
+      margin: 0;
+    }
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    h1 { 
+      color: #007acc; 
+      text-shadow: 1px 1px 2px #ccc; 
+      margin-bottom: 5px; 
+      font-size: 1.8rem;
+    }
+    .author { 
+      color: #888; 
+      font-size: 0.9em; 
+      margin-top: 0; 
+      margin-bottom: 20px; 
+    }
+    input[type="text"], input[type="password"] { 
+      padding: 12px; 
+      margin: 10px 0; 
+      border: 2px solid #007acc; 
+      border-radius: 5px; 
+      box-sizing: border-box;
+      font-size: 16px;
+      transition: width 0.3s ease-in-out;
+    }
+    #userName {
+      width: 150px;
+      padding: 8px 12px;
+    }
+    #userName:focus {
+      width: 100%;
+    }
+    #mainContent h3 {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    .search-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    #searchInput {
+      width: 250px;
+      padding: 8px 12px;
+    }
+    #searchInput:focus {
+      flex: 1;
+      width: 100%;
+    }
+    select#fileSelect {
+      padding: 8px 12px;
+      margin: 10px 0;
+      border: 2px solid #007acc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button { 
+      padding: 12px 18px; 
+      margin: 8px 5px; 
+      border: none; 
+      border-radius: 5px; 
+      background-color: #007acc; 
+      color: white; 
+      cursor: pointer; 
+      box-shadow: 1px 1px 5px #aaa; 
+      transition: all 0.3s ease; 
+      font-size: 16px;
+    }
+    button:hover { 
+      background-color: #005f99; 
+      transform: translateY(-2px);
+      box-shadow: 2px 4px 8px #999;
+    }
+    .hidden { 
+      display: none; 
+    }
+    #results, #adminPanel, #adminLogin { 
+      margin-top: 20px; 
+      background-color: #f9f9f9; 
+      padding: 20px; 
+      border-radius: 8px; 
+      box-shadow: 0 0 10px #ccc; 
+    }
+    table { 
+      min-width: 600px;
+      border-collapse: collapse; 
+      margin-bottom: 10px; 
+      width: 100%; /* Occupy full width */
+      border: 1px solid #ddd; /* Add border */
+    }
+    th, td { 
+      border: 1px solid #ddd; 
+      padding: 10px; 
+      text-align: left; 
+      font-size: 0.9rem;
+      line-height: 1.3;
+      position: relative;
+    }
+    th { 
+      background-color: #e0f0ff; 
+      font-weight: bold; 
+      cursor: pointer; 
+      position: relative; 
+      white-space: nowrap;
+    }
+    th:hover { 
+      background-color: #c9e5ff; 
+    }
+    th::after { 
+      content: '↕'; 
+      position: absolute; 
+      right: 8px; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      font-size: 0.8em; 
+      opacity: 0.5; 
+    }
+    th.asc::after { 
+      content: '↑'; 
+      opacity: 1; 
+    }
+    th.desc::after { 
+      content: '↓'; 
+      opacity: 1; 
+    }
+    .resize-handle {
+      display: none;
+    }
+    #timestamp { 
+      margin-top: 30px; 
+      font-style: italic; 
+      color: #555; 
+      font-size: 0.9rem;
+    }
+    .error { 
+      color: red; 
+      margin-top: 5px; 
+      font-weight: bold;
+    }
     /* Improved highlight colors - brighter but text remains visible */
     .highlight-0 { background-color: #FFFF00; font-weight: bold; }  /* Bright Yellow */
     .highlight-1 { background-color: #00FF00; font-weight: bold; }  /* Bright Green */
@@ -29,127 +160,362 @@
     .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; }  /* Bright Magenta */
     .highlight-4 { background-color: #FF8000; font-weight: bold; }  /* Bright Orange */
     .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }  /* Bright Pink */
-    .file-selector { margin: 15px 0; }
-    .file-selector label { font-weight: bold; display: block; margin-bottom: 5px; }
-    .file-nickname { display: flex; align-items: center; margin-bottom: 10px; }
-    .file-nickname input { margin-right: 10px; }
-    .admin-section { margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 8px; }
-    .admin-tools { margin-top: 20px; padding: 15px; background-color: #fff0f0; border-radius: 8px; }
-    .password-prompt { margin-top: 15px; padding: 10px; background-color: #fff9e6; border-radius: 5px; border: 1px solid #ffcc00; }
-    .admin-header { text-decoration: underline; text-underline-offset: 5px; margin-bottom: 15px; }
-    .selection-controls { margin: 10px 0; }
-    .log-row { transition: background-color 0.2s; }
-    .log-row:hover { background-color: #f5f5f5; }
-    .selected { background-color: #e6f7ff !important; }
-    .table-container { position: relative; }
-    #selectAllLogs { margin-right: 10px; }
-    .selected-files { margin-top: 10px; font-style: italic; color: #555; }
+    .file-selector { 
+      margin: 15px 0; 
+    }
+    .file-selector label { 
+      font-weight: bold; 
+      display: block; 
+      margin-bottom: 5px; 
+      font-size: 1.1rem;
+    }
+    .file-nickname { 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 10px; 
+      flex-wrap: wrap;
+    }
+    .file-nickname input { 
+      margin-right: 10px; 
+      flex: 1;
+      min-width: 150px;
+    }
+    .admin-section { 
+      margin-top: 20px; 
+      padding: 15px; 
+      background-color: #f0f8ff; 
+      border-radius: 8px; 
+    }
+    .admin-tools { 
+      margin-top: 20px; 
+      padding: 15px; 
+      background-color: #fff0f0; 
+      border-radius: 8px; 
+    }
+    .password-prompt { 
+      margin-top: 15px; 
+      padding: 10px; 
+      background-color: #fff9e6; 
+      border-radius: 5px; 
+      border: 1px solid #ffcc00; 
+    }
+    .admin-header { 
+      text-decoration: underline; 
+      text-underline-offset: 5px; 
+      margin-bottom: 15px; 
+      color: #007acc;
+      font-size: 1.2rem;
+    }
+    .selection-controls { 
+      margin: 10px 0; 
+    }
+    .log-row { 
+      transition: background-color 0.2s; 
+    }
+    .log-row:hover { 
+      background-color: #f5f5f5; 
+    }
+    .selected { 
+      background-color: #e6f7ff !important; 
+    }
+    .table-container { 
+      position: relative; 
+      overflow-x: auto;
+      width: 100%;
+    }
+    #selectAllLogs { 
+      margin-right: 10px; 
+    }
+    .selected-files { 
+      margin-top: 10px; 
+      font-style: italic; 
+      color: #555; 
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .admin-button {
+      background-color: #8e44ad;
+    }
+    .logout-button {
+      background-color: #ff6b6b;
+    }
+    .search-button {
+      background-color: #27ae60;
+    }
+    .export-button {
+      background-color: #9b59b6;
+    }
+    .export-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .delete-selected-container {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #fff0f0;
+      border-radius: 5px;
+      border: 1px solid #ff6b6b;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .search-inputs {
+        flex-direction: column;
+        gap: 5px;
+      }
+      
+      input[type="text"], input[type="password"], select {
+        font-size: 14px;
+        padding: 10px;
+      }
+      
+      button {
+        width: 100%;
+        margin: 5px 0;
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+        gap: 5px;
+      }
+      
+      #results, #adminPanel, #adminLogin {
+        padding: 15px;
+        margin-top: 15px;
+      }
+      
+      th, td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+      }
+      
+      th::after {
+        right: 4px;
+        font-size: 0.7em;
+      }
+      
+      .admin-header {
+        font-size: 1.1rem;
+      }
+      
+      .export-options {
+        flex-direction: column;
+      }
+      
+      .resize-handle {
+        display: none;
+      }
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-height: 90%;
+        overflow-y: auto;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .modal-actions {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    #previewTableContainer {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .top-buttons {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .refresh-button {
+      background-color: #3498db;
+    }
   </style>
 </head>
 <body>
-  <h1>📊 Excel Search Dashboard</h1>
-  <p class="author">by Shakeel</p>
-  
-  <!-- User Authentication Section -->
-  <div id="userAuth">
-    <h3>👤 Please Enter Your Name to Continue</h3>
-    <input type="text" id="userName" placeholder="Enter your name (letters only)..." />
-    <div id="nameError" class="error hidden">Please enter a valid name (letters only, no numbers or special characters)</div>
-    <button onclick="setUserName()">Continue</button>
-    <button onclick="toggleAdminLogin()">Admin Mode</button>
-  </div>
-  
-  <div id="mainContent" class="hidden">
-    <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
-    
-    <!-- File Selection Section -->
-    <div id="fileSelector" class="file-selector">
-      <label for="fileSelect">📁 Select Excel Files to Search:</label>
-      <select id="fileSelect">
-        <option value="" selected disabled>-- Select files to search --</option>
-        <option value="all">All Files</option>
-        <!-- Files will be populated here -->
-      </select>
-      <p id="selectedFiles" class="selected-files">No files selected</p>
+  <div class="container">
+    <div class="top-buttons">
+      <button onclick="location.reload()" class="refresh-button">🔄 Refresh</button>
     </div>
+    <h1>📊 Excel Search Dashboard</h1>
+    <p class="author">by Shakeel</p>
     
-    <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
-    <button onclick="performSearch()">Search</button>
-    <button onclick="toggleAdminLogin()">Admin Mode</button>
-    <button onclick="logout()" style="background-color: #ff6b6b;">Logout</button>
-
-    <div id="results" class="hidden">
-      <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
-      <p>Total Matches: <span id="totalMatches">0</span></p>
-      <p id="perTermMatches"></p>
-      <h3>🔎 Search Results</h3>
-      
-      <div id="resultText"></div>
-      <div id="exportButtons" style="margin-top: 15px;">
-        <button onclick="exportToExcel()">📊 Export to Excel</button>
-        <button onclick="printResults()">🖨️ Download as PDF</button>
+    <div id="userAuth">
+      <h3>Please Enter Your Name to Continue</h3>
+      <input type="text" id="userName" placeholder="Enter your name (letters only)..." />
+      <div id="nameError" class="error hidden">Please enter a valid name (letters only, no numbers or special characters)</div>
+      <div class="button-group">
+        <button onclick="setUserName()">Continue</button>
+        <button onclick="toggleAdminLogin()" class="admin-button">Admin Mode</button>
       </div>
     </div>
-  </div>
-
-  <!-- Admin Login - Now appears alongside content -->
-  <div id="adminLogin" class="hidden">
-    <h3>🔐 Admin Login</h3>
-    <input type="text" id="adminUser" placeholder="Username" style="display: none;" />
-    <input type="password" id="adminPass" placeholder="Password" /><br>
-    <button onclick="checkAdminLogin()">Login</button>
-    <button onclick="toggleAdminLogin()" style="background-color: #ff6b6b;">Cancel</button>
-  </div>
-
-  <!-- Admin Panel - Now appears alongside content -->
-  <div id="adminPanel" class="hidden">
-    <h3 class="admin-header">📋 Admin Panel - User Activity Logs</h3>
-    <button onclick="hideAdminPanel()" style="background-color: #ff6b6b; margin-bottom: 15px;">Close Admin Panel</button>
     
-    <div class="admin-tools">
-      <h3 class="admin-header">🛠️ Admin Tools</h3>
-      <button onclick="exportUserLogs()">📝 Export Logs as Text</button>
-      <button onclick="showDeleteConfirmation()" style="background-color: #ff6b6b;">🗑️ Delete Selected Logs</button>
+    <div id="mainContent" class="hidden">
+      <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
       
-      <div class="selection-controls">
-        <label><input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this.checked)"> Select All</label>
-        <button onclick="deleteSelectedLogs()" style="background-color: #ff6b6b; margin-left: 10px;">Delete Selected</button>
+      <div class="export-options">
+          <button onclick="handleExportClick('excel')" class="export-button">📊 Export to Excel</button>
+          <button onclick="handleExportClick('csv')" class="export-button">📝 Export to CSV</button>
+          <button onclick="handleExportClick('print')" class="export-button">🖨️ Print/PDF</button>
+          <button onclick="handleExportClick('json')" class="export-button">📋 Export to JSON</button>
       </div>
       
-      <div id="deleteConfirmation" class="password-prompt hidden">
-        <h4>Confirm Deletion</h4>
-        <p>This will permanently delete all selected user logs. This action cannot be undone.</p>
-        <input type="password" id="deletePassword" placeholder="Enter admin password to confirm" />
-        <button onclick="deleteAllLogs()" style="background-color: #ff6b6b;">Confirm Delete All</button>
-        <button onclick="hideDeleteConfirmation()">Cancel</button>
+      <div class="search-inputs">
+        <div class="file-selector">
+          <label for="fileSelect">📁 Select Files:</label>
+          <select id="fileSelect">
+            <option value="" selected disabled>-- Select files to search --</option>
+            <option value="all">All Files</option>
+          </select>
+        </div>
+        <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
       </div>
-    </div>
-    
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Select</th>
-            <th>User Name</th>
-            <th>Login Time</th>
-            <th>Logout Time</th>
-            <th>Duration</th>
-            <th>Search Count</th>
-            <th>Last Search</th>
-          </tr>
-        </thead>
-        <tbody id="logTable"></tbody>
-      </table>
+      
+      <div class="button-group">
+        <button onclick="performSearch()" class="search-button">Search</button>
+        <button onclick="toggleAdminLogin()" class="admin-button">Admin Mode</button>
+        <button onclick="logout()" class="logout-button">Logout</button>
+      </div>
+
+      <div id="results" class="hidden">
+        <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
+        <p>Total Matches: <span id="totalMatches">0</span></p>
+        <p id="perTermMatches"></p>
+        <h3>🔎 Search Results</h3>
+        
+        <div class="table-container">
+          <div id="resultText"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Admin File Management Section -->
-    <div class="admin-section">
-      <h3 class="admin-header">📁 File Management - Set Nicknames</h3>
-      <div id="fileNicknameManager">
-        <!-- File nickname inputs will be populated here -->
+    <div id="adminLogin" class="hidden">
+      <h3>🔐 Admin Login</h3>
+      <input type="text" id="adminUser" placeholder="Username" />
+      <input type="password" id="adminPass" placeholder="Password" />
+      <div class="button-group">
+        <button onclick="checkAdminLogin()">Login</button>
+        <button onclick="toggleAdminLogin()" class="logout-button">Cancel</button>
       </div>
-      <button onclick="saveFileNicknames()">💾 Save Nicknames</button>
-      <button onclick="resetFileNicknames()" style="background-color: #ff6b6b;">🔄 Reset to Default</button>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+      <h3 class="admin-header">📋 Admin Panel - User Activity Logs</h3>
+      <button onclick="hideAdminPanel()" class="logout-button" style="margin-bottom: 15px;">Close Admin Panel</button>
+      
+      <div class="admin-tools">
+        <h3 class="admin-header">🛠️ Admin Tools</h3>
+        <div class="button-group">
+          <button onclick="exportUserLogs()">📝 Export Logs as Text</button>
+          <button onclick="showDeleteConfirmation()" class="logout-button">🗑️ Delete All Logs</button>
+        </div>
+        
+        <div class="selection-controls">
+          <label><input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this.checked)"> Select All</label>
+        </div>
+        
+        <div id="deleteSelectedContainer" class="delete-selected-container hidden">
+          <p><strong><span id="selectedCount">0</span> log(s) selected</strong></p>
+          <button onclick="deleteSelectedLogs()" class="logout-button">🗑️ Delete Selected</button>
+        </div>
+        
+        <div id="deleteConfirmation" class="password-prompt hidden">
+          <h4>Confirm Deletion</h4>
+          <p>This will permanently delete all selected user logs. This action cannot be undone.</p>
+          <input type="password" id="deletePassword" placeholder="Enter admin password to confirm" />
+          <div class="button-group">
+            <button onclick="deleteAllLogs()" class="logout-button">Confirm Delete All</button>
+            <button onclick="hideDeleteConfirmation()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table id="adminLogsTable">
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>User Name</th>
+              <th>Login Time</th>
+              <th>Logout Time</th>
+              <th>Duration</th>
+              <th>Search Count</th>
+              <th>Last Search</th>
+            </tr>
+          </thead>
+          <tbody id="logTable"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-section">
+        <h3 class="admin-header">📁 File Management - Set Nicknames</h3>
+        <div id="fileNicknameManager">
+          </div>
+        <div class="button-group">
+          <button onclick="saveFileNicknames()">💾 Save Nicknames</button>
+          <button onclick="resetFileNicknames()" class="logout-button">🔄 Reset to Default</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Preview Modal -->
+  <div id="exportModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeExportPreview()">&times;</span>
+      <h3>Export Preview (<span id="previewType"></span>)</h3>
+      <p id="previewMessage"></p>
+      <div id="previewTableContainer"></div>
+      <div class="modal-actions">
+        <button onclick="closeExportPreview()">Cancel</button>
+        <button id="confirmExportBtn">Confirm Export</button>
+      </div>
     </div>
   </div>
 
@@ -170,6 +536,11 @@
     let sortColumn = null;
     let sortDirection = 'asc';
     let selectedLogs = new Set();
+    let isResizing = false;
+    let currentResizeHeader = null;
+    let startX = 0;
+    let startWidth = 0;
+    let currentExportType = null;
 
     // Remove file extension from filename
     function removeExtension(filename) {
@@ -300,25 +671,18 @@
       document.getElementById('deletePassword').value = '';
     }
 
-    // Delete all logs after password confirmation
-    function deleteAllLogs() {
-      const password = document.getElementById('deletePassword').value.trim();
+    // Update the selected logs count display
+    function updateSelectedLogsCount() {
+      const selectedCount = document.getElementById('selectedCount');
+      const deleteSelectedContainer = document.getElementById('deleteSelectedContainer');
       
-      if (password !== "9332") {
-        alert("Incorrect admin password. Deletion cancelled.");
-        hideDeleteConfirmation();
-        return;
+      selectedCount.textContent = selectedLogs.size;
+      
+      if (selectedLogs.size > 0) {
+        deleteSelectedContainer.classList.remove('hidden');
+      } else {
+        deleteSelectedContainer.classList.add('hidden');
       }
-      
-      // Clear all logs
-      userSessions = [];
-      searchLogs = [];
-      selectedLogs.clear();
-      
-      // Update UI
-      loadLogs();
-      hideDeleteConfirmation();
-      alert("All logs have been deleted successfully.");
     }
 
     // Toggle selection of all logs
@@ -342,6 +706,8 @@
           row.classList.remove('selected');
         }
       });
+      
+      updateSelectedLogsCount();
     }
 
     // Toggle selection of individual log
@@ -357,6 +723,8 @@
       // Update select all checkbox
       const selectAll = document.getElementById('selectAllLogs');
       selectAll.checked = selectedLogs.size === userSessions.length;
+      
+      updateSelectedLogsCount();
     }
 
     // Delete selected logs
@@ -385,6 +753,27 @@
       alert(`${sortedIndexes.length} log(s) have been deleted successfully.`);
     }
 
+    // Delete all logs after password confirmation
+    function deleteAllLogs() {
+      const password = document.getElementById('deletePassword').value.trim();
+      
+      if (password !== "9332") {
+        alert("Incorrect admin password. Deletion cancelled.");
+        hideDeleteConfirmation();
+        return;
+      }
+      
+      // Clear all logs
+      userSessions = [];
+      searchLogs = [];
+      selectedLogs.clear();
+      
+      // Update UI
+      loadLogs();
+      hideDeleteConfirmation();
+      alert("All logs have been deleted successfully.");
+    }
+
     // Export user logs as text file
     function exportUserLogs() {
       if (userSessions.length === 0) {
@@ -396,8 +785,8 @@
       textContent += "Generated on: " + new Date().toLocaleString() + "\n";
       textContent += "Total records: " + userSessions.length + "\n\n";
       
-      textContent += "USER SESSIONS:\n";
-      textContent += "==============\n\n";
+      textContent += "USER SESSION LOGS:\n";
+      textContent += "===================\n\n";
       
       userSessions.forEach((session, index) => {
         textContent += `RECORD ${index + 1}:\n`;
@@ -502,31 +891,55 @@
 
     function toggleAdminLogin() {
       const adminLogin = document.getElementById("adminLogin");
+      const mainContent = document.getElementById("mainContent");
       
       if (adminLogin.classList.contains("hidden")) {
-        // Show admin login - don't hide other content
+        // Show admin login
         adminLogin.classList.remove("hidden");
+        // Hide main content when admin login is shown
+        if (!mainContent.classList.contains("hidden")) {
+          mainContent.classList.add("hidden");
+        }
         
         // Clear previous inputs
-        document.getElementById("adminUser").value = "shakeel"; // Pre-fill with username
+        document.getElementById("adminUser").value = "";
         document.getElementById("adminPass").value = "";
         
-        // Focus on password field
-        document.getElementById("adminPass").focus();
+        // Focus on username field
+        document.getElementById("adminUser").focus();
       } else {
-        // Hide admin login
+        // Hide admin login, show main content
         adminLogin.classList.add("hidden");
+        if (currentUserName) {
+          mainContent.classList.remove("hidden");
+        }
       }
     }
     
     function hideAdminPanel() {
       document.getElementById("adminPanel").classList.add("hidden");
+      document.getElementById("mainContent").classList.remove("hidden");
       hideDeleteConfirmation();
+    }
+
+    function checkAdminLogin() { 
+      const user = document.getElementById("adminUser").value.trim().toLowerCase();
+      const pass = document.getElementById("adminPass").value.trim(); 
+      
+      // Case-insensitive username check for "shakeel"
+      if (user === "shakeel" && pass === "9332") { 
+        document.getElementById("adminLogin").classList.add("hidden"); 
+        document.getElementById("adminPanel").classList.remove("hidden"); 
+        loadLogs(); 
+        renderFileNicknameManager();
+      } else { 
+        alert("Invalid credentials!"); 
+      } 
     }
 
     async function loadAvailableFiles() {
       try {
-        // Use GitHub API to list files in the NEW repository
+        // Use GitHub API to list files in the repository
         const response = await fetch("https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/");
         const files = await response.json();
         
@@ -549,7 +962,6 @@
       const selectedValue = fileSelect.value;
       
       if (!selectedValue) {
-        alert("Please select a file to search.");
         return;
       }
       
@@ -563,7 +975,7 @@
 
       for (const file of filesToLoad) {
         try {
-          // Get the raw file content from the NEW repository
+          // Get the raw file content from the repository
           const rawUrl = `https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/${file.name}`;
           const res = await fetch(rawUrl);
           const arrayBuffer = await res.arrayBuffer();
@@ -608,6 +1020,12 @@
         alert("Please enter your name to search.");
         return;
       }
+
+      const fileSelect = document.getElementById("fileSelect");
+      if (!fileSelect.value) {
+          alert("Please select a file to search.");
+          return;
+      }
       
       // First load the selected files
       await loadSelectedExcelFiles();
@@ -620,15 +1038,15 @@
         resultText.innerHTML = "<p>Please type something to search.</p>"; 
         resultsContainer.classList.remove("hidden"); 
         document.getElementById("totalMatches").innerText = "0"; 
-        document.getElementById("perTermMatches").innerText = ""; 
+        document.getElementById("perTermMatches").innerText = "";
         return; 
       }
 
       const terms = input.split(",").map(term => term.trim().toLowerCase());
       
       if (excelData.length === 0) { 
-        resultText.innerHTML = "<p>No data loaded from GitHub.</p>"; 
-        resultsContainer.classList.remove("hidden"); 
+        resultText.innerHTML = "<p>No data loaded from GitHub. Please select a file and try again.</p>"; 
+        resultsContainer.classList.remove("hidden");
         return; 
       }
 
@@ -689,7 +1107,7 @@
       } else { 
         document.getElementById("perTermMatches").innerHTML = "No keywords matched."; 
       }
-
+      
       renderResultsTable();
       resultsContainer.classList.remove("hidden");
 
@@ -711,8 +1129,17 @@
       }
       
       // Get column headers from first result, including Source File
-      const headers = ['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')];
+      // Make sure we include all columns that exist in the data
+      const headers = new Set(['Line No', 'Source File']);
+      
+      // Add all other column names from the data
+      currentResults.forEach(result => {
+        Object.keys(result.sortData).forEach(key => {
+          if (key !== 'lineNo' && key !== '__sourceFile') {
+            headers.add(key);
+          }
+        });
+      });
       
       let tableHtml = `<table><thead><tr>`;
       headers.forEach(header => {
@@ -730,6 +1157,7 @@
           } else if (header === 'Source File') {
             tableHtml += `<td>${result.display['Source File'] || ''}</td>`;
           } else {
+            // Use the display version which has highlights
             tableHtml += `<td>${result.display[header] || ''}</td>`;
           }
         });
@@ -759,14 +1187,26 @@
             valueA = a.display['Source File'] || '';
             valueB = b.display['Source File'] || '';
         } else {
+          // Use the sortData which contains the original values (without HTML)
           valueA = a.sortData[column] || '';
           valueB = b.sortData[column] || '';
         }
         
         // Convert to numbers if possible for proper numeric sorting
-        if (!isNaN(valueA) && !isNaN(valueB) && valueA !== '' && valueB !== '') {
-          valueA = parseFloat(valueA);
-          valueB = parseFloat(valueB);
+        // Handle numbers with commas
+        const numA = typeof valueA === 'string' ? 
+          parseFloat(valueA.toString().replace(/,/g, '')) : parseFloat(valueA);
+        const numB = typeof valueB === 'string' ? 
+          parseFloat(valueB.toString().replace(/,/g, '')) : parseFloat(valueB);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          // Both values are numeric, compare as numbers
+          valueA = numA;
+          valueB = numB;
+        } else {
+          // At least one value is not numeric, compare as strings
+          valueA = String(valueA || '').toLowerCase();
+          valueB = String(valueB || '').toLowerCase();
         }
         
         if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
@@ -776,18 +1216,92 @@
       
       renderResultsTable();
     }
+    
+    function handleExportClick(type) {
+      if (currentResults.length === 0) {
+        alert("Please perform a search first to get results.");
+        return;
+      }
+      showExportPreview(type);
+    }
+    
+    // Export and Preview Functions
+    function showExportPreview(type) {
+        currentExportType = type;
+        const modal = document.getElementById('exportModal');
+        const previewType = document.getElementById('previewType');
+        const previewTableContainer = document.getElementById('previewTableContainer');
+        const confirmBtn = document.getElementById('confirmExportBtn');
+        const previewMessage = document.getElementById('previewMessage');
+
+        previewType.textContent = type.toUpperCase();
+        previewTableContainer.innerHTML = '';
+        
+        // Prepare data for preview (use plain text version)
+        const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
+          .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
+        
+        let previewHtml = `<table><thead><tr>`;
+        headers.forEach(header => {
+            previewHtml += `<th>${header}</th>`;
+        });
+        previewHtml += `</tr></thead><tbody>`;
+        
+        currentResults.forEach(result => {
+            previewHtml += `<tr>`;
+            headers.forEach(header => {
+                if (header === 'Line No') {
+                    previewHtml += `<td>${result.lineNo}</td>`;
+                } else if (header === 'Source File') {
+                    previewHtml += `<td>${result.display['Source File'] || ''}</td>`;
+                } else {
+                    const value = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+                    previewHtml += `<td>${value}</td>`;
+                }
+            });
+            previewHtml += `</tr>`;
+        });
+        previewHtml += `</tbody></table>`;
+        
+        previewTableContainer.innerHTML = previewHtml;
+
+        // Update message based on export type
+        switch(type) {
+            case 'excel':
+                previewMessage.textContent = 'Preview of data to be exported as an Excel file (.xlsx).';
+                break;
+            case 'csv':
+                previewMessage.textContent = 'Preview of data to be exported as a CSV file (.csv).';
+                break;
+            case 'json':
+                previewMessage.textContent = 'Preview of data to be exported as a JSON file (.json).';
+                break;
+            case 'print':
+                previewMessage.textContent = 'Preview of data for printing or saving as a PDF.';
+                break;
+        }
+
+        // Set up the confirm button action
+        confirmBtn.onclick = () => {
+            if (currentExportType === 'excel') exportToExcel();
+            else if (currentExportType === 'csv') exportToCSV();
+            else if (currentExportType === 'json') exportToJSON();
+            else if (currentExportType === 'print') printResults();
+            closeExportPreview();
+        };
+
+        modal.style.display = 'block';
+    }
+
+    function closeExportPreview() {
+        document.getElementById('exportModal').style.display = 'none';
+    }
 
     function exportToExcel() { 
-      if (currentResults.length === 0) { 
-        alert("No results to export."); 
-        return; 
-      } 
-      
       const workbook = XLSX.utils.book_new(); 
-      const headers = ['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')];
+      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
+        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
       
-      // Prepare data for export (using original values without HTML formatting)
       const exportData = currentResults.map(result => {
         const row = {
           'Line No': result.lineNo,
@@ -796,7 +1310,6 @@
         
         headers.forEach(header => {
           if (header !== 'Line No' && header !== 'Source File') {
-            // Remove HTML tags for clean export
             row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
           }
         });
@@ -808,6 +1321,85 @@
       XLSX.writeFile(workbook, "search_results.xlsx"); 
     }
 
+    function exportToCSV() {
+      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
+        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
+      
+      const exportData = currentResults.map(result => {
+        const row = {
+          'Line No': result.lineNo,
+          'Source File': result.display['Source File'] || ''
+        };
+        
+        headers.forEach(header => {
+          if (header !== 'Line No' && header !== 'Source File') {
+            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+          }
+        });
+        return row;
+      });
+      
+      let csvContent = headers.join(',') + '\n';
+      exportData.forEach(row => {
+        const values = headers.map(header => {
+          let value = row[header] || '';
+          value = String(value).replace(/"/g, '""');
+          if (String(value).includes(',')) {
+            value = `"${value}"`;
+          }
+          return value;
+        });
+        csvContent += values.join(',') + '\n';
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'search_results.csv';
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }
+
+    function exportToJSON() {
+      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
+        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
+      
+      const exportData = currentResults.map(result => {
+        const row = {
+          'Line No': result.lineNo,
+          'Source File': result.display['Source File'] || ''
+        };
+        
+        headers.forEach(header => {
+          if (header !== 'Line No' && header !== 'Source File') {
+            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+          }
+        });
+        return row;
+      });
+      
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'search_results.json';
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }
+
     function printResults() { 
       const printWindow = window.open("", "", "width=800,height=600"); 
       const content = document.getElementById("resultText").innerHTML; 
@@ -815,21 +1407,6 @@
       printWindow.document.close(); 
       printWindow.focus(); 
       printWindow.print(); 
-    }
-
-    function checkAdminLogin() { 
-      const user = "shakeel"; // Hardcoded username (case-insensitive)
-      const pass = document.getElementById("adminPass").value.trim(); 
-      
-      // Case-insensitive username check for "shakeel"
-      if (pass === "9332") { 
-        document.getElementById("adminLogin").classList.add("hidden"); 
-        document.getElementById("adminPanel").classList.remove("hidden"); 
-        loadLogs(); 
-        renderFileNicknameManager();
-      } else { 
-        alert("Invalid credentials!"); 
-      } 
     }
 
     function formatDuration(seconds) {
@@ -873,28 +1450,29 @@
           </tr>
         `;
       }); 
+      
+      updateSelectedLogsCount();
     }
 
-    // Initialize the application
     window.onload = async function() { 
       document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); 
       
-      // Load file nicknames from localStorage
       loadFileNicknames();
       
-      // Load available files from GitHub
       await loadAvailableFiles();
       
-      // Add event listener for file selection change
       document.getElementById("fileSelect").addEventListener("change", updateSelectedFilesDisplay);
       
-      // Add keyboard event listeners
       document.getElementById("userName").addEventListener("keypress", function(e) { 
         if (e.key === "Enter") setUserName(); 
       });
       
       document.getElementById("searchInput").addEventListener("keypress", function(e) { 
         if (e.key === "Enter") performSearch(); 
+      }); 
+
+      document.getElementById("adminUser").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") checkAdminLogin(); 
       }); 
 
       document.getElementById("adminPass").addEventListener("keypress", function(e) { 
@@ -904,6 +1482,13 @@
       document.getElementById("deletePassword").addEventListener("keypress", function(e) { 
         if (e.key === "Enter") deleteAllLogs(); 
       }); 
+
+      window.onclick = function(event) {
+        const modal = document.getElementById('exportModal');
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      }
     };
   </script>
 </body>
