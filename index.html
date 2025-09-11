@@ -32,27 +32,29 @@
       margin-top: 0;
       margin-bottom: 20px;
     }
-    input[type="text"], input[type="password"], select {
+    input[type="text"], input[type="password"], select, .small-input {
       padding: 12px;
       margin: 10px 0;
       border: 2px solid var(--primary-color);
       border-radius: var(--border-radius);
       box-sizing: border-box;
-      max-width: 33.33%;
-      width: auto;
+      max-width: 300px; /* Constrained width */
+      width: 100%;
       transition: all 0.3s ease;
       font-size: 1rem;
     }
-    input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    input[type="text"]:focus, input[type="password"]:focus, select:focus, .small-input:focus {
       border-color: #005f99;
       box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
       outline: none;
     }
-    .button-group {
+    .button-group, .small-button-group {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 10px;
+      justify-content: flex-start;
+      width: auto;
     }
     button, .file-select-container label {
       background-color: var(--primary-color);
@@ -63,7 +65,8 @@
       cursor: pointer;
       font-size: 1rem;
       transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-      flex-grow: 1;
+      flex-grow: 0;
+      width: auto;
     }
     button:hover, .file-select-container label:hover {
       background-color: #005f99;
@@ -95,6 +98,7 @@
       position: relative;
       display: inline-block;
       width: 100%;
+      max-width: 300px;
     }
     .file-select-container select {
       -webkit-appearance: none;
@@ -112,6 +116,12 @@
     }
     .search-section input {
       flex-grow: 1;
+      max-width: none;
+      width: auto;
+    }
+    .search-section button {
+      flex-grow: 0;
+      width: auto;
     }
     .results-section {
       margin-top: 20px;
@@ -313,6 +323,8 @@
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
       background-color: #f9f9f9;
+      width: fit-content;
+      max-width: 400px;
     }
     .admin-config-panel h4 {
       margin-top: 0;
@@ -323,12 +335,13 @@
       margin-top: 10px;
     }
     .admin-config-panel input[type="text"], .admin-config-panel input[type="color"] {
-      width: calc(100% - 24px);
+      width: 100%;
     }
     .config-button-group {
       display: flex;
       gap: 10px;
       margin-top: 15px;
+      flex-wrap: wrap;
     }
     .log-entry.selected {
       background-color: #e6f7ff;
@@ -347,6 +360,21 @@
     .input-row button {
       flex-grow: 0;
       width: auto;
+    }
+    .admin-input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .admin-input-group input {
+      width: 300px;
+      max-width: 100%;
+    }
+    .admin-files-viewer-container {
+      width: 100%;
+      max-width: 500px;
     }
   </style>
 </head>
@@ -399,11 +427,13 @@
     <div id="admin-log-tab" class="tab-content">
       <div class="admin-login-section">
         <h3>Admin Login</h3>
-        <label for="adminUser">Username:</label>
-        <input type="text" id="adminUser" placeholder="Admin username" style="max-width: 33.33%;">
-        <label for="adminPass">Password:</label>
-        <input type="password" id="adminPass" placeholder="Admin password" style="max-width: 33.33%;">
-        <div class="button-group">
+        <div class="admin-input-group">
+          <label for="adminUser">Username:</label>
+          <input type="text" id="adminUser" placeholder="Admin username">
+          <label for="adminPass">Password:</label>
+          <input type="password" id="adminPass" placeholder="Admin password">
+        </div>
+        <div class="small-button-group">
           <button onclick="checkAdminLogin()">Login</button>
           <button onclick="forgotPassword()">Forgot Password?</button>
         </div>
@@ -411,7 +441,7 @@
       </div>
 
       <div id="admin-view" style="display: none; margin-top: 20px;">
-        <div class="button-group" style="justify-content: flex-end;">
+        <div class="small-button-group" style="justify-content: flex-end;">
           <button onclick="logoutAdmin()" class="logout-btn">Logout</button>
         </div>
         <div class="admin-logs-view">
@@ -424,9 +454,9 @@
           <div id="admin-log-viewer" class="section-viewer">
             <table id="adminLogs"></table>
           </div>
-          <div style="margin-top: 20px;">
+          <div class="admin-input-group">
             <label for="deleteAllPassword">Delete All Logs Password:</label>
-            <input type="password" id="deleteAllPassword" placeholder="Enter password to delete all logs" style="max-width: 33.33%;">
+            <input type="password" id="deleteAllPassword" placeholder="Enter password to delete all logs">
             <button onclick="deleteAllLogs()">Delete All Logs</button>
             <p id="deleteAllMessage"></p>
           </div>
@@ -436,7 +466,7 @@
           <label for="primaryColor">Primary Color:</label>
           <input type="color" id="primaryColor" value="#007acc">
           <label for="borderRadius">Button Corner Radius (px):</label>
-          <input type="number" id="borderRadius" value="8" min="0" max="20" style="max-width: 33.33%;">
+          <input type="number" id="borderRadius" value="8" min="0" max="20" class="small-input">
           <div class="config-button-group">
             <button onclick="applyConfig()">Apply</button>
             <button onclick="saveConfig()">Save</button>
@@ -446,14 +476,16 @@
         <div class="admin-config-panel">
           <h4>Data Source Configuration</h4>
           <label for="fileUrl">Add new Excel File URL:</label>
-          <input type="text" id="fileUrl" placeholder="Enter file URL" style="max-width: 33.33%;">
-          <label for="fileName">File Name:</label>
-          <input type="text" id="fileName" placeholder="Enter display name" style="max-width: 33.33%;">
+          <input type="text" id="fileUrl" placeholder="Enter file URL from GitHub" class="small-input">
+          <label for="fileName">File Nickname:</label>
+          <input type="text" id="fileName" placeholder="Enter nickname" class="small-input">
           <div class="config-button-group">
             <button onclick="addFile()">Add File</button>
           </div>
-          <div id="admin-files-viewer" class="section-viewer" style="height: 300px;">
-            <table id="adminFiles"></table>
+          <div class="admin-files-viewer-container">
+            <div id="admin-files-viewer" class="section-viewer" style="height: 300px;">
+              <table id="adminFiles"></table>
+            </div>
           </div>
         </div>
       </div>
@@ -483,7 +515,6 @@
     let app;
     let auth;
     let db;
-    let storage;
     let userId;
     let currentUserName = "Unknown";
     let isUserAdmin = false;
@@ -491,6 +522,7 @@
     const ADMIN_PASS = "9332";
     const ADMIN_EMAIL = "shakeelsnu@gmail.com";
 
+    // Firestore paths
     const adminLogsPath = `artifacts/${appId}/public/data/logs`;
     const excelFilesDocPath = `artifacts/${appId}/public/data/excel_files/file_list`;
     const userSearchLogsPath = `artifacts/${appId}/users/${userId}/search_logs`;
@@ -587,7 +619,7 @@
       openModal(`User name set to: ${currentUserName}`);
     }
 
-    // Load available files from Firestore
+    // Load available files from Firestore (nicknames to URLs)
     async function loadAvailableFiles(files) {
       const fileSelect = document.getElementById("fileSelect");
       fileSelect.innerHTML = '';
@@ -1030,18 +1062,24 @@
     }
 
     // Data Source Configuration functions
+    const GITHUB_REPO_URL = 'https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/';
+
     async function addFile() {
       const fileUrl = document.getElementById('fileUrl').value.trim();
       const fileName = document.getElementById('fileName').value.trim() || 'Untitled';
+
       if (!fileUrl) {
         openModal("Please enter a valid file URL.");
         return;
       }
+      
+      const rawUrl = `https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/${fileUrl.split('/').pop()}`;
+
       try {
         const docRef = doc(db, excelFilesDocPath);
         const docSnap = await getDoc(docRef);
         const existingFiles = docSnap.exists() ? docSnap.data().files : [];
-        const updatedFiles = [...existingFiles, { url: fileUrl, name: fileName }];
+        const updatedFiles = [...existingFiles, { url: rawUrl, name: fileName }];
         await setDoc(docRef, { files: updatedFiles });
         document.getElementById('fileUrl').value = '';
         document.getElementById('fileName').value = '';
@@ -1092,7 +1130,7 @@
         return;
       }
       const headerRow = document.createElement("tr");
-      headerRow.innerHTML = `<th>File Name</th><th>URL</th><th>Actions</th>`;
+      headerRow.innerHTML = `<th>File Nickname</th><th>URL</th><th>Actions</th>`;
       table.appendChild(headerRow);
       files.forEach((file, index) => {
         const row = document.createElement("tr");
