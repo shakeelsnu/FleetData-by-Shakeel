@@ -384,7 +384,7 @@
       <button onclick="location.reload()" class="refresh-button">🔄 Refresh</button>
     </div>
     <h1>📊 Excel Search Dashboard</h1>
-    <p class="author">by Shakeel</p>
+    <p class="author">by The Creator</p>
     
     <div id="userAuth">
       <h3>Please Enter Your Name to Continue</h3>
@@ -610,52 +610,6 @@
         option.textContent = displayName;
         
         fileSelect.appendChild(option);
-      });
-    }
-
-    // Update selected files display
-    function updateSelectedFilesDisplay() {
-      const fileSelect = document.getElementById("fileSelect");
-      const selectedFilesElement = document.getElementById("selectedFiles");
-      
-      if (fileSelect.value === "all") {
-        selectedFilesElement.textContent = "All files selected";
-      } else if (fileSelect.value) {
-        const displayName = fileNicknames[fileSelect.value] || removeExtension(fileSelect.value);
-        selectedFilesElement.textContent = `Selected: ${displayName}`;
-      } else {
-        selectedFilesElement.textContent = "No files selected";
-      }
-    }
-
-    // Render the file nickname manager in the admin panel
-    function renderFileNicknameManager() {
-      const manager = document.getElementById("fileNicknameManager");
-      manager.innerHTML = "";
-      
-      if (availableFiles.length === 0) {
-        manager.innerHTML = "<p>No files available to manage.</p>";
-        return;
-      }
-      
-      availableFiles.forEach(file => {
-        const div = document.createElement("div");
-        div.className = "file-nickname";
-        
-        const label = document.createElement("label");
-        label.textContent = removeExtension(file.name) + ":";
-        label.style.minWidth = "150px";
-        
-        const input = document.createElement("input");
-        input.type = "text";
-        input.className = "nickname-input";
-        input.dataset.filename = file.name;
-        input.value = fileNicknames[file.name] || "";
-        input.placeholder = "Enter nickname for " + removeExtension(file.name);
-        
-        div.appendChild(label);
-        div.appendChild(input);
-        manager.appendChild(div);
       });
     }
 
@@ -1460,8 +1414,6 @@
       loadFileNicknames();
       
       await loadAvailableFiles();
-      
-      document.getElementById("fileSelect").addEventListener("change", updateSelectedFilesDisplay);
       
       document.getElementById("userName").addEventListener("keypress", function(e) { 
         if (e.key === "Enter") setUserName(); 
