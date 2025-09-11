@@ -5,1442 +5,1162 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Excel Search Dashboard</title>
   <style>
-    body { 
-      font-family: 'Segoe UI', sans-serif; 
-      background: linear-gradient(to right, #f0f8ff, #e6f7ff); 
-      color: #333; 
-      padding: 15px; 
+    :root {
+      --primary-color: #007acc;
+      --border-radius: 8px;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f0f8ff, #e6f7ff);
+      color: #333;
+      padding: 15px;
       margin: 0;
     }
     .container {
-      max-width: 100%;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 10px;
     }
-    h1 { 
-      color: #007acc; 
-      text-shadow: 1px 1px 2px #ccc; 
-      margin-bottom: 5px; 
+    h1 {
+      color: var(--primary-color);
+      text-shadow: 1px 1px 2px #ccc;
+      margin-bottom: 5px;
       font-size: 1.8rem;
     }
-    .author { 
-      color: #888; 
-      font-size: 0.9em; 
-      margin-top: 0; 
-      margin-bottom: 20px; 
+    .author {
+      color: #888;
+      font-size: 0.9em;
+      margin-top: 0;
+      margin-bottom: 20px;
     }
-    input[type="text"], input[type="password"] { 
-      padding: 12px; 
-      margin: 10px 0; 
-      border: 2px solid #007acc; 
-      border-radius: 5px; 
-      box-sizing: border-box;
-      font-size: 16px;
-      transition: width 0.3s ease-in-out;
-    }
-    #userName {
-      width: 150px;
-      padding: 8px 12px;
-    }
-    #userName:focus {
-      width: 100%;
-    }
-    #mainContent h3 {
-        font-size: 1.2em;
-        margin-bottom: 5px;
-    }
-    .search-inputs {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    #searchInput {
-      width: 250px;
-      padding: 8px 12px;
-    }
-    #searchInput:focus {
-      flex: 1;
-      width: 100%;
-    }
-    select#fileSelect {
-      padding: 8px 12px;
+    input[type="text"], input[type="password"], select {
+      padding: 12px;
       margin: 10px 0;
-      border: 2px solid #007acc;
-      border-radius: 5px;
-      font-size: 16px;
+      border: 2px solid var(--primary-color);
+      border-radius: var(--border-radius);
+      box-sizing: border-box;
+      max-width: 33.33%;
+      width: auto;
+      transition: all 0.3s ease;
+      font-size: 1rem;
     }
-    button { 
-      padding: 12px 18px; 
-      margin: 8px 5px; 
-      border: none; 
-      border-radius: 5px; 
-      background-color: #007acc; 
-      color: white; 
-      cursor: pointer; 
-      box-shadow: 1px 1px 5px #aaa; 
-      transition: all 0.3s ease; 
-      font-size: 16px;
-    }
-    button:hover { 
-      background-color: #005f99; 
-      transform: translateY(-2px);
-      box-shadow: 2px 4px 8px #999;
-    }
-    .hidden { 
-      display: none; 
-    }
-    #results, #adminPanel, #adminLogin { 
-      margin-top: 20px; 
-      background-color: #f9f9f9; 
-      padding: 20px; 
-      border-radius: 8px; 
-      box-shadow: 0 0 10px #ccc; 
-    }
-    table { 
-      min-width: 600px;
-      border-collapse: collapse; 
-      margin-bottom: 10px; 
-      width: 100%; /* Occupy full width */
-      border: 1px solid #ddd; /* Add border */
-    }
-    th, td { 
-      border: 1px solid #ddd; 
-      padding: 10px; 
-      text-align: left; 
-      font-size: 0.9rem;
-      line-height: 1.3;
-      position: relative;
-    }
-    th { 
-      background-color: #e0f0ff; 
-      font-weight: bold; 
-      cursor: pointer; 
-      position: relative; 
-      white-space: nowrap;
-    }
-    th:hover { 
-      background-color: #c9e5ff; 
-    }
-    th::after { 
-      content: '↕'; 
-      position: absolute; 
-      right: 8px; 
-      top: 50%; 
-      transform: translateY(-50%); 
-      font-size: 0.8em; 
-      opacity: 0.5; 
-    }
-    th.asc::after { 
-      content: '↑'; 
-      opacity: 1; 
-    }
-    th.desc::after { 
-      content: '↓'; 
-      opacity: 1; 
-    }
-    .resize-handle {
-      display: none;
-    }
-    #timestamp { 
-      margin-top: 30px; 
-      font-style: italic; 
-      color: #555; 
-      font-size: 0.9rem;
-    }
-    .error { 
-      color: red; 
-      margin-top: 5px; 
-      font-weight: bold;
-    }
-    /* Improved highlight colors - brighter but text remains visible */
-    .highlight-0 { background-color: #FFFF00; font-weight: bold; }  /* Bright Yellow */
-    .highlight-1 { background-color: #00FF00; font-weight: bold; }  /* Bright Green */
-    .highlight-2 { background-color: #00FFFF; font-weight: bold; }  /* Bright Cyan */
-    .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; }  /* Bright Magenta */
-    .highlight-4 { background-color: #FF8000; font-weight: bold; }  /* Bright Orange */
-    .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }  /* Bright Pink */
-    .file-selector { 
-      margin: 15px 0; 
-    }
-    .file-selector label { 
-      font-weight: bold; 
-      display: block; 
-      margin-bottom: 5px; 
-      font-size: 1.1rem;
-    }
-    .file-nickname { 
-      display: flex; 
-      align-items: center; 
-      margin-bottom: 10px; 
-      flex-wrap: wrap;
-    }
-    .file-nickname input { 
-      margin-right: 10px; 
-      flex: 1;
-      min-width: 150px;
-    }
-    .admin-section { 
-      margin-top: 20px; 
-      padding: 15px; 
-      background-color: #f0f8ff; 
-      border-radius: 8px; 
-    }
-    .admin-tools { 
-      margin-top: 20px; 
-      padding: 15px; 
-      background-color: #fff0f0; 
-      border-radius: 8px; 
-    }
-    .password-prompt { 
-      margin-top: 15px; 
-      padding: 10px; 
-      background-color: #fff9e6; 
-      border-radius: 5px; 
-      border: 1px solid #ffcc00; 
-    }
-    .admin-header { 
-      text-decoration: underline; 
-      text-underline-offset: 5px; 
-      margin-bottom: 15px; 
-      color: #007acc;
-      font-size: 1.2rem;
-    }
-    .selection-controls { 
-      margin: 10px 0; 
-    }
-    .log-row { 
-      transition: background-color 0.2s; 
-    }
-    .log-row:hover { 
-      background-color: #f5f5f5; 
-    }
-    .selected { 
-      background-color: #e6f7ff !important; 
-    }
-    .table-container { 
-      position: relative; 
-      overflow-x: auto;
-      width: 100%;
-    }
-    #selectAllLogs { 
-      margin-right: 10px; 
-    }
-    .selected-files { 
-      margin-top: 10px; 
-      font-style: italic; 
-      color: #555; 
+    input[type="text"]:focus, input[type="password"]:focus, select:focus {
+      border-color: #005f99;
+      box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
+      outline: none;
     }
     .button-group {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 15px 0;
+      margin-top: 10px;
     }
-    .admin-button {
-      background-color: #8e44ad;
+    button, .file-select-container label {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      flex-grow: 1;
     }
-    .logout-button {
-      background-color: #ff6b6b;
+    button:hover, .file-select-container label:hover {
+      background-color: #005f99;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    .search-button {
-      background-color: #27ae60;
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    .export-button {
-      background-color: #9b59b6;
+    .logout-btn {
+      background-color: #f44336;
     }
-    .export-options {
+    .logout-btn:hover {
+      background-color: #d32f2f;
+    }
+    .section-viewer {
+      width: 100%;
+      height: 60vh; /* Responsive height */
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      margin-top: 20px;
+      overflow-y: auto;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .file-select-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .file-select-container select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: white url('data:image/svg+xml;utf8,<svg fill="%23007acc" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>') no-repeat right 12px center;
+      background-size: 20px;
+      padding-right: 40px;
+    }
+    .search-section {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
-      margin-top: 15px;
+      align-items: center;
+      margin-top: 20px;
     }
-    .delete-selected-container {
-      margin-top: 15px;
+    .search-section input {
+      flex-grow: 1;
+    }
+    .results-section {
+      margin-top: 20px;
+    }
+    .results-section h3 {
+      color: var(--primary-color);
+      font-size: 1.2rem;
+    }
+    #searchResults, #adminLogs, #adminFiles {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+    #searchResults th, #adminLogs th, #adminFiles th {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    #searchResults td, #adminLogs td, #adminFiles td {
+      border: 1px solid #ddd;
       padding: 10px;
-      background-color: #fff0f0;
-      border-radius: 5px;
-      border: 1px solid #ff6b6b;
+      word-wrap: break-word;
+      min-width: 100px;
+      position: relative;
     }
-    
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-      
-      h1 {
-        font-size: 1.5rem;
-      }
-      
-      .search-inputs {
-        flex-direction: column;
-        gap: 5px;
-      }
-      
-      input[type="text"], input[type="password"], select {
-        font-size: 14px;
-        padding: 10px;
-      }
-      
-      button {
-        width: 100%;
-        margin: 5px 0;
-        padding: 10px 15px;
-        font-size: 14px;
-      }
-      
-      .button-group {
-        flex-direction: column;
-        gap: 5px;
-      }
-      
-      #results, #adminPanel, #adminLogin {
-        padding: 15px;
-        margin-top: 15px;
-      }
-      
-      th, td {
-        padding: 8px 6px;
-        font-size: 0.8rem;
-      }
-      
-      th::after {
-        right: 4px;
-        font-size: 0.7em;
-      }
-      
-      .admin-header {
-        font-size: 1.1rem;
-      }
-      
-      .export-options {
-        flex-direction: column;
-      }
-      
-      .resize-handle {
-        display: none;
-      }
+    .no-results {
+      color: #e53935;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
     }
-
-    /* Modal styles */
+    .tab-container {
+      display: flex;
+      border-bottom: 2px solid var(--primary-color);
+      margin-bottom: 20px;
+      background-color: #f0f8ff;
+    }
+    .tab-button {
+      background-color: transparent;
+      border: none;
+      padding: 15px 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #555;
+      position: relative;
+      top: 2px;
+    }
+    .tab-button.active {
+      background-color: white;
+      border-top: 2px solid var(--primary-color);
+      border-left: 2px solid var(--primary-color);
+      border-right: 2px solid var(--primary-color);
+      border-bottom: 2px solid white;
+      border-top-left-radius: var(--border-radius);
+      border-top-right-radius: var(--border-radius);
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+    .tab-content {
+      padding: 20px;
+      border: 2px solid var(--primary-color);
+      border-top: none;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      background-color: white;
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .log-entry.selected {
+      background-color: #e6f7ff;
+    }
+    .logs-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .log-counter {
+      font-size: 0.9em;
+      color: #555;
+    }
     .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.4);
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
     }
     .modal-content {
-        background-color: #fefefe;
-        margin: 5% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-height: 90%;
-        overflow-y: auto;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content h2 {
+      color: var(--primary-color);
+      margin-top: 0;
     }
     .close-button {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
     }
     .close-button:hover,
     .close-button:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
     }
-    .modal-actions {
-        margin-top: 20px;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
+    .resizable-th {
+      position: relative;
     }
-    #previewTableContainer {
-        max-height: 500px;
-        overflow-y: auto;
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 5px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: col-resize;
+      user-select: none;
     }
-    .top-buttons {
+    .resizer:hover {
+      background: #fff;
+    }
+    th.resizing {
+      cursor: col-resize;
+    }
+    .status-message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      font-weight: bold;
+      text-align: center;
+    }
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 122, 204, 0.1);
+      border-left-color: var(--primary-color);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: none;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .delete-log-btn {
+      position: absolute;
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #ff4d4f;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .log-entry:hover .delete-log-btn {
+      opacity: 1;
+    }
+    .admin-config-panel {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      background-color: #f9f9f9;
+    }
+    .admin-config-panel h4 {
+      margin-top: 0;
+      color: var(--primary-color);
+    }
+    .admin-config-panel label {
+      display: block;
+      margin-top: 10px;
+    }
+    .admin-config-panel input[type="text"], .admin-config-panel input[type="color"] {
+      width: calc(100% - 24px);
+    }
+    .config-button-group {
       display: flex;
-      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .log-entry.selected {
+      background-color: #e6f7ff;
+    }
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
     }
-    .refresh-button {
-      background-color: #3498db;
+    .input-row input {
+      flex-grow: 1;
+      max-width: none;
+      width: auto;
+    }
+    .input-row button {
+      flex-grow: 0;
+      width: auto;
     }
   </style>
 </head>
 <body>
+
   <div class="container">
-    <div class="top-buttons">
-      <button onclick="location.reload()" class="refresh-button">🔄 Refresh</button>
+    <header>
+      <h1>Excel Search Dashboard</h1>
+      <p class="author">A simple tool for searching and managing Excel data. Copyright M. Shakeel.</p>
+    </header>
+
+    <div class="tab-container">
+      <button class="tab-button active" onclick="openTab(event, 'main-search-tab')">Search</button>
+      <button class="tab-button" onclick="openTab(event, 'admin-log-tab')">Admin Logs</button>
     </div>
-    <h1>📊 Excel Search Dashboard</h1>
-    <p class="author">by The Creator</p>
-    
-    <div id="userAuth">
-      <h3>Please Enter Your Name to Continue</h3>
-      <input type="text" id="userName" placeholder="Enter your name (letters only)..." />
-      <div id="nameError" class="error hidden">Please enter a valid name (letters only, no numbers or special characters)</div>
-      <div class="button-group">
-        <button onclick="setUserName()">Continue</button>
-        <button onclick="toggleAdminLogin()" class="admin-button">Admin Mode</button>
-      </div>
-    </div>
-    
-    <div id="mainContent" class="hidden">
-      <p id="timestamp">Page loaded: <span id="lastUpdated"></span></p>
-      
-      <div class="export-options">
-          <button onclick="handleExportClick('excel')" class="export-button">📊 Export to Excel</button>
-          <button onclick="handleExportClick('csv')" class="export-button">📝 Export to CSV</button>
-          <button onclick="handleExportClick('print')" class="export-button">🖨️ Print/PDF</button>
-          <button onclick="handleExportClick('json')" class="export-button">📋 Export to JSON</button>
-      </div>
-      
-      <div class="search-inputs">
-        <div class="file-selector">
-          <label for="fileSelect">📁 Select Files:</label>
-          <select id="fileSelect">
-            <option value="" selected disabled>-- Select files to search --</option>
-            <option value="all">All Files</option>
-          </select>
+
+    <div id="main-search-tab" class="tab-content active">
+      <div class="user-section">
+        <label for="userName">Name:</label>
+        <div class="input-row">
+          <input type="text" id="userName" placeholder="Enter your name" style="max-width: 33.33%;">
+          <button onclick="setUserName()">Set Name</button>
         </div>
-        <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
-      </div>
-      
-      <div class="button-group">
-        <button onclick="performSearch()" class="search-button">Search</button>
-        <button onclick="toggleAdminLogin()" class="admin-button">Admin Mode</button>
-        <button onclick="logout()" class="logout-button">Logout</button>
+        <p id="currentUserDisplay">Current User: N/A</p>
       </div>
 
-      <div id="results" class="hidden">
-        <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
-        <p>Total Matches: <span id="totalMatches">0</span></p>
-        <p id="perTermMatches"></p>
-        <h3>🔎 Search Results</h3>
-        
-        <div class="table-container">
-          <div id="resultText"></div>
+      <div class="file-section" style="margin-top: 20px;">
+        <label for="fileSelect">Select File:</label>
+        <div class="file-select-container">
+          <select id="fileSelect" style="max-width: 33.33%;"></select>
+        </div>
+        <p id="selectedFilesDisplay"></p>
+      </div>
+
+      <div class="search-section input-row">
+        <input type="text" id="searchInput" placeholder="Enter search term" style="max-width: 33.33%;">
+        <button onclick="performSearch()">Search</button>
+        <div id="loadingSpinner" class="spinner"></div>
+      </div>
+
+      <div class="results-section">
+        <h3 id="resultHeader">Search Results:</h3>
+        <p id="lastUpdated" style="font-size: 0.8em; color: #666;"></p>
+        <div id="excel-viewer" class="section-viewer">
+          <table id="searchResults"></table>
         </div>
       </div>
     </div>
 
-    <div id="adminLogin" class="hidden">
-      <h3>🔐 Admin Login</h3>
-      <input type="text" id="adminUser" placeholder="Username" />
-      <input type="password" id="adminPass" placeholder="Password" />
-      <div class="button-group">
-        <button onclick="checkAdminLogin()">Login</button>
-        <button onclick="toggleAdminLogin()" class="logout-button">Cancel</button>
-      </div>
-    </div>
-
-    <div id="adminPanel" class="hidden">
-      <h3 class="admin-header">📋 Admin Panel - User Activity Logs</h3>
-      <button onclick="hideAdminPanel()" class="logout-button" style="margin-bottom: 15px;">Close Admin Panel</button>
-      
-      <div class="admin-tools">
-        <h3 class="admin-header">🛠️ Admin Tools</h3>
+    <div id="admin-log-tab" class="tab-content">
+      <div class="admin-login-section">
+        <h3>Admin Login</h3>
+        <label for="adminUser">Username:</label>
+        <input type="text" id="adminUser" placeholder="Admin username" style="max-width: 33.33%;">
+        <label for="adminPass">Password:</label>
+        <input type="password" id="adminPass" placeholder="Admin password" style="max-width: 33.33%;">
         <div class="button-group">
-          <button onclick="exportUserLogs()">📝 Export Logs as Text</button>
-          <button onclick="showDeleteConfirmation()" class="logout-button">🗑️ Delete All Logs</button>
+          <button onclick="checkAdminLogin()">Login</button>
+          <button onclick="forgotPassword()">Forgot Password?</button>
         </div>
-        
-        <div class="selection-controls">
-          <label><input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this.checked)"> Select All</label>
+        <p id="loginMessage"></p>
+      </div>
+
+      <div id="admin-view" style="display: none; margin-top: 20px;">
+        <div class="button-group" style="justify-content: flex-end;">
+          <button onclick="logoutAdmin()" class="logout-btn">Logout</button>
         </div>
-        
-        <div id="deleteSelectedContainer" class="delete-selected-container hidden">
-          <p><strong><span id="selectedCount">0</span> log(s) selected</strong></p>
-          <button onclick="deleteSelectedLogs()" class="logout-button">🗑️ Delete Selected</button>
-        </div>
-        
-        <div id="deleteConfirmation" class="password-prompt hidden">
-          <h4>Confirm Deletion</h4>
-          <p>This will permanently delete all selected user logs. This action cannot be undone.</p>
-          <input type="password" id="deletePassword" placeholder="Enter admin password to confirm" />
-          <div class="button-group">
-            <button onclick="deleteAllLogs()" class="logout-button">Confirm Delete All</button>
-            <button onclick="hideDeleteConfirmation()">Cancel</button>
+        <div class="admin-logs-view">
+          <h3>Admin Log Viewer</h3>
+          <div class="logs-actions">
+            <button onclick="deleteSelectedLogs()">Delete Selected</button>
+            <button onclick="exportUserLogs()">Export Selected Logs</button>
+            <div class="log-counter">Selected: <span id="selectedLogsCount">0</span></div>
+          </div>
+          <div id="admin-log-viewer" class="section-viewer">
+            <table id="adminLogs"></table>
+          </div>
+          <div style="margin-top: 20px;">
+            <label for="deleteAllPassword">Delete All Logs Password:</label>
+            <input type="password" id="deleteAllPassword" placeholder="Enter password to delete all logs" style="max-width: 33.33%;">
+            <button onclick="deleteAllLogs()">Delete All Logs</button>
+            <p id="deleteAllMessage"></p>
           </div>
         </div>
-      </div>
-      
-      <div class="table-container">
-        <table id="adminLogsTable">
-          <thead>
-            <tr>
-              <th>Select</th>
-              <th>User Name</th>
-              <th>Login Time</th>
-              <th>Logout Time</th>
-              <th>Duration</th>
-              <th>Search Count</th>
-              <th>Last Search</th>
-            </tr>
-          </thead>
-          <tbody id="logTable"></tbody>
-        </table>
-      </div>
-
-      <div class="admin-section">
-        <h3 class="admin-header">📁 File Management - Set Nicknames</h3>
-        <div id="fileNicknameManager">
+        <div class="admin-config-panel">
+          <h4>UI Configuration</h4>
+          <label for="primaryColor">Primary Color:</label>
+          <input type="color" id="primaryColor" value="#007acc">
+          <label for="borderRadius">Button Corner Radius (px):</label>
+          <input type="number" id="borderRadius" value="8" min="0" max="20" style="max-width: 33.33%;">
+          <div class="config-button-group">
+            <button onclick="applyConfig()">Apply</button>
+            <button onclick="saveConfig()">Save</button>
+            <button onclick="resetConfig()">Reset</button>
           </div>
-        <div class="button-group">
-          <button onclick="saveFileNicknames()">💾 Save Nicknames</button>
-          <button onclick="resetFileNicknames()" class="logout-button">🔄 Reset to Default</button>
+        </div>
+        <div class="admin-config-panel">
+          <h4>Data Source Configuration</h4>
+          <label for="fileUrl">Add new Excel File URL:</label>
+          <input type="text" id="fileUrl" placeholder="Enter file URL" style="max-width: 33.33%;">
+          <label for="fileName">File Name:</label>
+          <input type="text" id="fileName" placeholder="Enter display name" style="max-width: 33.33%;">
+          <div class="config-button-group">
+            <button onclick="addFile()">Add File</button>
+          </div>
+          <div id="admin-files-viewer" class="section-viewer" style="height: 300px;">
+            <table id="adminFiles"></table>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Export Preview Modal -->
-  <div id="exportModal" class="modal">
+  <div id="messageModal" class="modal">
     <div class="modal-content">
-      <span class="close-button" onclick="closeExportPreview()">&times;</span>
-      <h3>Export Preview (<span id="previewType"></span>)</h3>
-      <p id="previewMessage"></p>
-      <div id="previewTableContainer"></div>
-      <div class="modal-actions">
-        <button onclick="closeExportPreview()">Cancel</button>
-        <button id="confirmExportBtn">Confirm Export</button>
-      </div>
+      <span class="close-button" onclick="closeModal()">&times;</span>
+      <p id="modalMessage"></p>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script>
-    // Global variables
-    let excelData = [];
-    let availableFiles = [];
-    let fileNicknames = {};
-    let searchLogs = [];
-    let userSessions = [];
-    let currentResults = [];
-    let currentUserName = "";
-    let currentUserLoginTime = null;
-    let userSearchCount = 0;
-    let userLastSearch = "";
-    const highlightColors = ["highlight-0", "highlight-1", "highlight-2", "highlight-3", "highlight-4", "highlight-5"];
-    let sortColumn = null;
-    let sortDirection = 'asc';
-    let selectedLogs = new Set();
-    let isResizing = false;
-    let currentResizeHeader = null;
-    let startX = 0;
-    let startWidth = 0;
-    let currentExportType = null;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, onSnapshot, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // Remove file extension from filename
-    function removeExtension(filename) {
-      return filename.replace(/\.[^/.]+$/, "");
-    }
+    // Global variables (will be populated by the canvas environment)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    // Load file nicknames from localStorage or initialize empty object
-    function loadFileNicknames() {
-      const savedNicknames = localStorage.getItem('fileNicknames');
-      if (savedNicknames) {
-        fileNicknames = JSON.parse(savedNicknames);
-      } else {
-        fileNicknames = {};
+    let app;
+    let auth;
+    let db;
+    let storage;
+    let userId;
+    let currentUserName = "Unknown";
+    let isUserAdmin = false;
+    const ADMIN_USER = "Shakeel";
+    const ADMIN_PASS = "9332";
+    const ADMIN_EMAIL = "shakeelsnu@gmail.com";
+
+    const adminLogsPath = `artifacts/${appId}/public/data/logs`;
+    const excelFilesDocPath = `artifacts/${appId}/public/data/excel_files/file_list`;
+    const userSearchLogsPath = `artifacts/${appId}/users/${userId}/search_logs`;
+
+    // Initialize Firebase
+    function initializeFirebase() {
+      if (Object.keys(firebaseConfig).length === 0) {
+        console.error("Firebase config is missing. Cannot initialize Firebase.");
+        return null;
       }
-    }
-
-    // Save file nicknames to localStorage
-    function saveFileNicknames() {
-      // Collect all nickname inputs
-      const nicknameInputs = document.querySelectorAll('.nickname-input');
-      nicknameInputs.forEach(input => {
-        const filename = input.dataset.filename;
-        const nickname = input.value.trim();
-        if (nickname) {
-          fileNicknames[filename] = nickname;
-        } else {
-          // If nickname is empty, remove it from the object
-          delete fileNicknames[filename];
-        }
-      });
-      
-      // Save to localStorage
-      localStorage.setItem('fileNicknames', JSON.stringify(fileNicknames));
-      alert("File nicknames saved successfully!");
-      
-      // Update the file dropdown
-      updateFileDropdown();
-    }
-
-    // Reset file nicknames to default (empty)
-    function resetFileNicknames() {
-      if (confirm("Are you sure you want to reset all file nicknames to their default names?")) {
-        fileNicknames = {};
-        localStorage.removeItem('fileNicknames');
-        renderFileNicknameManager();
-        updateFileDropdown();
-        alert("File nicknames have been reset to default.");
-      }
-    }
-
-    // Update the file selection dropdown with nicknames
-    function updateFileDropdown() {
-      const fileSelect = document.getElementById("fileSelect");
-      
-      // Clear existing options except the first two
-      while (fileSelect.options.length > 2) {
-        fileSelect.remove(2);
-      }
-      
-      // Add files to dropdown with nicknames if available
-      availableFiles.forEach(file => {
-        const option = document.createElement("option");
-        option.value = file.name;
-        
-        // Use nickname if available, otherwise use filename without extension
-        const displayName = fileNicknames[file.name] || removeExtension(file.name);
-        option.textContent = displayName;
-        
-        fileSelect.appendChild(option);
-      });
-    }
-
-    // Show delete confirmation dialog
-    function showDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.remove('hidden');
-      document.getElementById('deletePassword').focus();
-    }
-
-    // Hide delete confirmation dialog
-    function hideDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.add('hidden');
-      document.getElementById('deletePassword').value = '';
-    }
-
-    // Update the selected logs count display
-    function updateSelectedLogsCount() {
-      const selectedCount = document.getElementById('selectedCount');
-      const deleteSelectedContainer = document.getElementById('deleteSelectedContainer');
-      
-      selectedCount.textContent = selectedLogs.size;
-      
-      if (selectedLogs.size > 0) {
-        deleteSelectedContainer.classList.remove('hidden');
-      } else {
-        deleteSelectedContainer.classList.add('hidden');
-      }
-    }
-
-    // Toggle selection of all logs
-    function toggleSelectAllLogs(selectAll) {
-      const checkboxes = document.querySelectorAll('.log-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll;
-        const index = parseInt(checkbox.dataset.index);
-        if (selectAll) {
-          selectedLogs.add(index);
-        } else {
-          selectedLogs.delete(index);
-        }
-      });
-      
-      // Update row styling
-      document.querySelectorAll('.log-row').forEach((row, idx) => {
-        if (selectAll) {
-          row.classList.add('selected');
-        } else {
-          row.classList.remove('selected');
-        }
-      });
-      
-      updateSelectedLogsCount();
-    }
-
-    // Toggle selection of individual log
-    function toggleLogSelection(checkbox, index) {
-      if (checkbox.checked) {
-        selectedLogs.add(index);
-        checkbox.parentElement.parentElement.classList.add('selected');
-      } else {
-        selectedLogs.delete(index);
-        checkbox.parentElement.parentElement.classList.remove('selected');
-      }
-      
-      // Update select all checkbox
-      const selectAll = document.getElementById('selectAllLogs');
-      selectAll.checked = selectedLogs.size === userSessions.length;
-      
-      updateSelectedLogsCount();
-    }
-
-    // Delete selected logs
-    function deleteSelectedLogs() {
-      if (selectedLogs.size === 0) {
-        alert("Please select at least one log to delete.");
-        return;
-      }
-      
-      if (!confirm(`Are you sure you want to delete ${selectedLogs.size} log(s)? This action cannot be undone.`)) {
-        return;
-      }
-      
-      // Delete selected logs (in reverse order to avoid index issues)
-      const sortedIndexes = Array.from(selectedLogs).sort((a, b) => b - a);
-      sortedIndexes.forEach(index => {
-        userSessions.splice(index, 1);
-      });
-      
-      // Clear selection
-      selectedLogs.clear();
-      document.getElementById('selectAllLogs').checked = false;
-      
-      // Update UI
-      loadLogs();
-      alert(`${sortedIndexes.length} log(s) have been deleted successfully.`);
-    }
-
-    // Delete all logs after password confirmation
-    function deleteAllLogs() {
-      const password = document.getElementById('deletePassword').value.trim();
-      
-      if (password !== "9332") {
-        alert("Incorrect admin password. Deletion cancelled.");
-        hideDeleteConfirmation();
-        return;
-      }
-      
-      // Clear all logs
-      userSessions = [];
-      searchLogs = [];
-      selectedLogs.clear();
-      
-      // Update UI
-      loadLogs();
-      hideDeleteConfirmation();
-      alert("All logs have been deleted successfully.");
-    }
-
-    // Export user logs as text file
-    function exportUserLogs() {
-      if (userSessions.length === 0) {
-        alert("No user logs available to export.");
-        return;
-      }
-      
-      let textContent = "USER LOGIN HISTORY REPORT\n";
-      textContent += "Generated on: " + new Date().toLocaleString() + "\n";
-      textContent += "Total records: " + userSessions.length + "\n\n";
-      
-      textContent += "USER SESSION LOGS:\n";
-      textContent += "===================\n\n";
-      
-      userSessions.forEach((session, index) => {
-        textContent += `RECORD ${index + 1}:\n`;
-        textContent += `User: ${session.user}\n`;
-        textContent += `Login Time: ${session.loginTime ? session.loginTime.toLocaleString() : "N/A"}\n`;
-        textContent += `Logout Time: ${session.logoutTime ? session.logoutTime.toLocaleString() : "Still logged in"}\n`;
-        textContent += `Duration: ${session.duration ? formatDuration(session.duration) : "N/A"}\n`;
-        textContent += `Search Count: ${session.searchCount || 0}\n`;
-        textContent += `Last Search: ${session.lastSearch || "No searches"}\n`;
-        textContent += "----------------------------------------\n\n";
-      });
-      
-      // Create download link
-      const blob = new Blob([textContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'user_logs_report.txt';
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    }
-
-    function validateName(name) {
-      // Only allow letters and spaces, no numbers or special characters
-      return /^[A-Za-z\s]+$/.test(name);
-    }
-
-    function setUserName() {
-      const userName = document.getElementById("userName").value.trim();
-      const nameError = document.getElementById("nameError");
-      
-      if (!userName) {
-        nameError.textContent = "Please enter your name";
-        nameError.classList.remove("hidden");
-        return;
-      }
-      
-      if (!validateName(userName)) {
-        nameError.textContent = "Please enter a valid name (letters only, no numbers or special characters)";
-        nameError.classList.remove("hidden");
-        return;
-      }
-      
-      nameError.classList.add("hidden");
-      currentUserName = userName;
-      currentUserLoginTime = new Date();
-      userSearchCount = 0;
-      userLastSearch = "";
-      
-      document.getElementById("userAuth").classList.add("hidden");
-      document.getElementById("mainContent").classList.remove("hidden");
-      
-      // Store user session
-      userSessions.push({
-        user: userName,
-        loginTime: currentUserLoginTime,
-        logoutTime: null,
-        searchCount: 0,
-        lastSearch: ""
-      });
-      
-      // Focus on search input for immediate use
-      document.getElementById("searchInput").focus();
-    }
-    
-    function logout() {
-      if (currentUserName && currentUserLoginTime) {
-        const logoutTime = new Date();
-        const duration = Math.round((logoutTime - currentUserLoginTime) / 1000); // in seconds
-        
-        // Update the user session with logout time
-        const currentSession = userSessions.find(session => 
-          session.user === currentUserName && session.logoutTime === null
-        );
-        
-        if (currentSession) {
-          currentSession.logoutTime = logoutTime;
-          currentSession.duration = duration;
-          currentSession.searchCount = userSearchCount;
-          currentSession.lastSearch = userLastSearch;
-        }
-      }
-      
-      currentUserName = "";
-      currentUserLoginTime = null;
-      userSearchCount = 0;
-      userLastSearch = "";
-      
-      document.getElementById("userAuth").classList.remove("hidden");
-      document.getElementById("mainContent").classList.add("hidden");
-      document.getElementById("adminLogin").classList.add("hidden");
-      document.getElementById("adminPanel").classList.add("hidden");
-      document.getElementById("userName").value = "";
-      document.getElementById("userName").focus();
-    }
-
-    function toggleAdminLogin() {
-      const adminLogin = document.getElementById("adminLogin");
-      const mainContent = document.getElementById("mainContent");
-      
-      if (adminLogin.classList.contains("hidden")) {
-        // Show admin login
-        adminLogin.classList.remove("hidden");
-        // Hide main content when admin login is shown
-        if (!mainContent.classList.contains("hidden")) {
-          mainContent.classList.add("hidden");
-        }
-        
-        // Clear previous inputs
-        document.getElementById("adminUser").value = "";
-        document.getElementById("adminPass").value = "";
-        
-        // Focus on username field
-        document.getElementById("adminUser").focus();
-      } else {
-        // Hide admin login, show main content
-        adminLogin.classList.add("hidden");
-        if (currentUserName) {
-          mainContent.classList.remove("hidden");
-        }
-      }
-    }
-    
-    function hideAdminPanel() {
-      document.getElementById("adminPanel").classList.add("hidden");
-      document.getElementById("mainContent").classList.remove("hidden");
-      hideDeleteConfirmation();
-    }
-
-    function checkAdminLogin() { 
-      const user = document.getElementById("adminUser").value.trim().toLowerCase();
-      const pass = document.getElementById("adminPass").value.trim(); 
-      
-      // Case-insensitive username check for "shakeel"
-      if (user === "shakeel" && pass === "9332") { 
-        document.getElementById("adminLogin").classList.add("hidden"); 
-        document.getElementById("adminPanel").classList.remove("hidden"); 
-        loadLogs(); 
-        renderFileNicknameManager();
-      } else { 
-        alert("Invalid credentials!"); 
-      } 
-    }
-
-    async function loadAvailableFiles() {
       try {
-        // Use GitHub API to list files in the repository
-        const response = await fetch("https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/");
-        const files = await response.json();
-        
-        // Filter for Excel files
-        availableFiles = files.filter(f => f.name.endsWith(".xlsx"));
-        
-        // Update the file selection dropdown
-        updateFileDropdown();
-        
-        return availableFiles;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        return { app, auth, db };
       } catch (error) {
-        console.error("Error loading available files:", error);
-        document.getElementById("excelUploadDate").innerText = "❌ Failed to load file list";
-        return [];
+        console.error("Error initializing Firebase:", error);
+        return null;
       }
     }
 
-    async function loadSelectedExcelFiles() {
-      const fileSelect = document.getElementById("fileSelect");
-      const selectedValue = fileSelect.value;
-      
-      if (!selectedValue) {
-        return;
-      }
-      
-      // If "All Files" is selected
-      const loadAll = selectedValue === "all";
-      
-      const filesToLoad = loadAll ? availableFiles : availableFiles.filter(f => f.name === selectedValue);
-      
-      excelData = [];
-      let loadedNames = [];
+    // Authentication and Initialization
+    async function initAuth() {
+      const firebaseServices = initializeFirebase();
+      if (!firebaseServices) return;
+      app = firebaseServices.app;
+      auth = firebaseServices.auth;
+      db = firebaseServices.db;
 
-      for (const file of filesToLoad) {
-        try {
-          // Get the raw file content from the repository
-          const rawUrl = `https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/${file.name}`;
-          const res = await fetch(rawUrl);
-          const arrayBuffer = await res.arrayBuffer();
-          const workbook = XLSX.read(arrayBuffer, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet);
-          
-          // Add filename to each row for tracking
-          const rowsWithSource = rows.map(row => ({ ...row, __sourceFile: file.name }));
-          excelData = excelData.concat(rowsWithSource);
-          
-          // Use nickname if available, otherwise use filename without extension
-          const displayName = fileNicknames[file.name] || removeExtension(file.name);
-          loadedNames.push(displayName);
-        } catch (err) { 
-          console.error("Failed loading:", file.name, err); 
+      try {
+        if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+          await signInAnonymously(auth);
         }
-      }
-
-      document.getElementById("excelUploadDate").innerText = loadedNames.length > 0 ? 
-        loadedNames.join(", ") + " loaded at " + new Date().toLocaleString() : 
-        "❌ No Excel files found or selected";
-    }
-
-    async function getClientIP() {
-      try { 
-        const response = await fetch("https://api.ipify.org?format=json"); 
-        const data = await response.json(); 
-        return data.ip; 
-      } catch (e) { 
-        return "IP not available"; 
+        userId = auth.currentUser.uid;
+        console.log("Authenticated with Firebase. User ID:", userId);
+        startLogListener();
+        startFileListener();
+      } catch (error) {
+        console.error("Firebase Authentication failed:", error);
+        userId = 'anonymous-' + crypto.randomUUID();
+        console.log("Signed in anonymously. User ID:", userId);
       }
     }
-    
-    function getDeviceName() { 
-      return navigator.userAgent || "Device name not available"; 
+
+    // Modal functions
+    function openModal(message) {
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('messageModal').style.display = 'block';
     }
 
+    function closeModal() {
+      document.getElementById('messageModal').style.display = 'none';
+    }
+
+    // Log user search activity to Firestore
+    async function logSearch(searchTerm) {
+      if (!userId || !db) return;
+      const userSearchLogsCol = collection(db, `artifacts/${appId}/users/${userId}/search_logs`);
+      try {
+        await addDoc(userSearchLogsCol, {
+          userId: userId,
+          userName: currentUserName,
+          searchTerm: searchTerm,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("Error adding search log document:", e);
+      }
+    }
+
+    // Log admin actions to a public collection
+    async function logAdminAction(action) {
+      if (!db) return;
+      const adminLogsCol = collection(db, adminLogsPath);
+      try {
+        await addDoc(adminLogsCol, {
+          userId: userId,
+          userName: currentUserName,
+          action: action,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("Error adding admin log document:", e);
+      }
+    }
+
+    // Handle user name input
+    function setUserName() {
+      const userNameInput = document.getElementById("userName");
+      currentUserName = userNameInput.value.trim() || "Unknown";
+      document.getElementById("currentUserDisplay").innerText = `Current User: ${currentUserName}`;
+      openModal(`User name set to: ${currentUserName}`);
+    }
+
+    // Load available files from Firestore
+    async function loadAvailableFiles(files) {
+      const fileSelect = document.getElementById("fileSelect");
+      fileSelect.innerHTML = '';
+      if (files && files.length > 0) {
+        files.forEach(file => {
+          const option = document.createElement("option");
+          option.value = file.url;
+          option.innerText = file.name;
+          fileSelect.appendChild(option);
+        });
+      } else {
+        const option = document.createElement("option");
+        option.innerText = "No files available";
+        option.disabled = true;
+        fileSelect.appendChild(option);
+      }
+      updateSelectedFilesDisplay();
+    }
+
+    function updateSelectedFilesDisplay() {
+      const fileSelect = document.getElementById("fileSelect");
+      const selectedOption = fileSelect.options[fileSelect.selectedIndex];
+      const selectedFilesDisplay = document.getElementById("selectedFilesDisplay");
+      if (selectedOption && selectedOption.value) {
+        selectedFilesDisplay.innerText = `Selected file: ${selectedOption.innerText}`;
+      } else {
+        selectedFilesDisplay.innerText = '';
+      }
+    }
+
+    // Perform search
     async function performSearch() {
-      // Check if user is logged in
-      if (!currentUserName) {
-        alert("Please enter your name to search.");
-        return;
-      }
-
       const fileSelect = document.getElementById("fileSelect");
-      if (!fileSelect.value) {
-          alert("Please select a file to search.");
-          return;
-      }
-      
-      // First load the selected files
-      await loadSelectedExcelFiles();
-      
-      const input = document.getElementById("searchInput").value.trim();
-      const resultText = document.getElementById("resultText");
-      const resultsContainer = document.getElementById("results");
-      
-      if (!input) { 
-        resultText.innerHTML = "<p>Please type something to search.</p>"; 
-        resultsContainer.classList.remove("hidden"); 
-        document.getElementById("totalMatches").innerText = "0"; 
-        document.getElementById("perTermMatches").innerText = "";
-        return; 
+      const selectedUrl = fileSelect.value;
+      const searchInput = document.getElementById("searchInput").value.trim();
+      const spinner = document.getElementById("loadingSpinner");
+      const resultsTable = document.getElementById("searchResults");
+      resultsTable.innerHTML = '';
+      document.getElementById("resultHeader").innerText = "Search Results:";
+
+      if (!selectedUrl) {
+        openModal("Please select a file first.");
+        return;
       }
 
-      const terms = input.split(",").map(term => term.trim().toLowerCase());
-      
-      if (excelData.length === 0) { 
-        resultText.innerHTML = "<p>No data loaded from GitHub. Please select a file and try again.</p>"; 
-        resultsContainer.classList.remove("hidden");
-        return; 
+      if (!searchInput) {
+        openModal("Please enter a search term.");
+        return;
       }
 
-      currentResults = [];
-      let totalMatches = 0;
-      const matchesPerTerm = new Map();
-      let lineNo = 1;
+      spinner.style.display = 'inline-block';
+      await logSearch(searchInput);
 
-      excelData.forEach(row => {
-        let rowMatched = false;
-        let formattedRow = { lineNo: lineNo };
-        let rowData = {};
+      try {
+        const response = await fetch(selectedUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        let foundResults = [];
 
-        // Add line number to row data
-        rowData['Line No'] = lineNo;
-        
-        // Use nickname if available, otherwise use filename without extension
-        const sourceFileName = row.__sourceFile || 'Unknown';
-        const displaySource = fileNicknames[sourceFileName] || removeExtension(sourceFileName);
-        rowData['Source File'] = displaySource;
-        
-        Object.keys(row).forEach(key => {
-          // Skip the internal source file property
-          if (key === '__sourceFile') return;
-          
-          let cell = String(row[key] || "");
-          let originalCell = cell;
-          
-          terms.forEach((term, idx) => {
-            const regex = new RegExp(`(${term})`, "gi");
-            if (regex.test(cell)) {
-              rowMatched = true;
-              cell = cell.replace(regex, `<span class='${highlightColors[idx % highlightColors.length]}'>$1</span>`);
-              matchesPerTerm.set(term, (matchesPerTerm.get(term) || 0) + 1);
-              totalMatches++;
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const headers = jsonData[0];
+          for (let i = 1; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            const rowString = JSON.stringify(row).toLowerCase();
+            if (rowString.includes(searchInput.toLowerCase())) {
+              const rowObject = {};
+              headers.forEach((header, index) => {
+                rowObject[header] = row[index];
+              });
+              foundResults.push(rowObject);
             }
-          });
-          
-          rowData[key] = cell;
-          formattedRow[key] = originalCell; // Store original value for sorting
+          }
         });
-        
-        if (rowMatched) {
-          currentResults.push({ display: rowData, sortData: formattedRow, lineNo: lineNo });
-          lineNo++;
+
+        spinner.style.display = 'none';
+
+        if (foundResults.length > 0) {
+          displayResults(foundResults);
+        } else {
+          resultsTable.innerHTML = `<tr><td colspan="100%" class="no-results">No results found for "${searchInput}".</td></tr>`;
         }
-      });
-
-      document.getElementById("totalMatches").innerText = totalMatches;
-
-      if (matchesPerTerm.size > 0) {
-        const termStrings = [];
-        matchesPerTerm.forEach((count, term) => {
-          const colorClass = highlightColors[terms.indexOf(term) % highlightColors.length];
-          termStrings.push(`<span class='${colorClass}'><b>${term}</b></span>: ${count}`);
-        });
-        document.getElementById("perTermMatches").innerHTML = "Matches per keyword: " + termStrings.join(", ");
-      } else { 
-        document.getElementById("perTermMatches").innerHTML = "No keywords matched."; 
+      } catch (error) {
+        spinner.style.display = 'none';
+        console.error("Error fetching or processing Excel file:", error);
+        openModal("Failed to load or search the file. Please try again.");
       }
-      
-      renderResultsTable();
-      resultsContainer.classList.remove("hidden");
-
-      const ip = await getClientIP();
-      const device = getDeviceName();
-      searchLogs.push({ user: currentUserName, ip, device, time: new Date().toLocaleString(), query: input });
-      
-      // Update user search stats
-      userSearchCount++;
-      userLastSearch = input;
     }
 
-    function renderResultsTable() {
-      const resultText = document.getElementById("resultText");
-      
-      if (currentResults.length === 0) {
-        resultText.innerHTML = "<p>No matches found.</p>";
+    function displayResults(results) {
+      const resultsTable = document.getElementById("searchResults");
+      resultsTable.innerHTML = '';
+      if (results.length === 0) {
+        resultsTable.innerHTML = `<tr><td colspan="100%" class="no-results">No results to display.</td></tr>`;
         return;
       }
-      
-      // Get column headers from first result, including Source File
-      // Make sure we include all columns that exist in the data
-      const headers = new Set(['Line No', 'Source File']);
-      
-      // Add all other column names from the data
-      currentResults.forEach(result => {
-        Object.keys(result.sortData).forEach(key => {
-          if (key !== 'lineNo' && key !== '__sourceFile') {
-            headers.add(key);
-          }
-        });
+
+      const headers = Object.keys(results[0]);
+      const headerRow = document.createElement("tr");
+      headers.forEach(headerText => {
+        const th = document.createElement("th");
+        th.innerText = headerText;
+        headerRow.appendChild(th);
       });
-      
-      let tableHtml = `<table><thead><tr>`;
-      headers.forEach(header => {
-        const isSorted = header === sortColumn;
-        const sortClass = isSorted ? (sortDirection === 'asc' ? 'asc' : 'desc') : '';
-        tableHtml += `<th class="${sortClass}" onclick="sortTable('${header}')">${header}</th>`;
-      });
-      tableHtml += `</tr></thead><tbody>`;
-      
-      currentResults.forEach((result) => {
-        tableHtml += `<tr>`;
+      resultsTable.appendChild(headerRow);
+
+      results.forEach(rowData => {
+        const row = document.createElement("tr");
         headers.forEach(header => {
-          if (header === 'Line No') {
-            tableHtml += `<td>${result.lineNo}</td>`;
-          } else if (header === 'Source File') {
-            tableHtml += `<td>${result.display['Source File'] || ''}</td>`;
-          } else {
-            // Use the display version which has highlights
-            tableHtml += `<td>${result.display[header] || ''}</td>`;
-          }
+          const cell = document.createElement("td");
+          cell.innerText = rowData[header] || '';
+          row.appendChild(cell);
         });
-        tableHtml += `</tr>`;
+        resultsTable.appendChild(row);
       });
-      
-      tableHtml += `</tbody></table>`;
-      resultText.innerHTML = tableHtml;
     }
 
-    function sortTable(column) {
-      if (sortColumn === column) {
-        // Toggle direction if same column clicked again
-        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    // Admin Log Functions
+    function checkAdminLogin() {
+      const user = document.getElementById("adminUser").value;
+      const pass = document.getElementById("adminPass").value;
+      const loginMessage = document.getElementById("loginMessage");
+      const adminView = document.getElementById("admin-view");
+
+      if (user.toLowerCase() === ADMIN_USER.toLowerCase() && pass === ADMIN_PASS) {
+        loginMessage.innerText = "Login successful!";
+        loginMessage.className = "status-message status-success";
+        adminView.style.display = 'block';
+        isUserAdmin = true;
+        logAdminAction("Admin logged in.");
       } else {
-        sortColumn = column;
-        sortDirection = 'asc';
+        loginMessage.innerText = "Invalid credentials.";
+        loginMessage.className = "status-message status-error";
+        adminView.style.display = 'none';
+        isUserAdmin = false;
       }
-      
-      currentResults.sort((a, b) => {
-        let valueA, valueB;
-        
-        if (column === 'Line No') {
-          valueA = a.lineNo;
-          valueB = b.lineNo;
-        } else if (column === 'Source File') {
-            valueA = a.display['Source File'] || '';
-            valueB = b.display['Source File'] || '';
-        } else {
-          // Use the sortData which contains the original values (without HTML)
-          valueA = a.sortData[column] || '';
-          valueB = b.sortData[column] || '';
-        }
-        
-        // Convert to numbers if possible for proper numeric sorting
-        // Handle numbers with commas
-        const numA = typeof valueA === 'string' ? 
-          parseFloat(valueA.toString().replace(/,/g, '')) : parseFloat(valueA);
-        const numB = typeof valueB === 'string' ? 
-          parseFloat(valueB.toString().replace(/,/g, '')) : parseFloat(valueB);
-        
-        if (!isNaN(numA) && !isNaN(numB)) {
-          // Both values are numeric, compare as numbers
-          valueA = numA;
-          valueB = numB;
-        } else {
-          // At least one value is not numeric, compare as strings
-          valueA = String(valueA || '').toLowerCase();
-          valueB = String(valueB || '').toLowerCase();
-        }
-        
-        if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
-        if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-      
-      renderResultsTable();
     }
-    
-    function handleExportClick(type) {
-      if (currentResults.length === 0) {
-        alert("Please perform a search first to get results.");
+
+    function logoutAdmin() {
+      document.getElementById("adminUser").value = '';
+      document.getElementById("adminPass").value = '';
+      document.getElementById("loginMessage").innerText = '';
+      document.getElementById("admin-view").style.display = 'none';
+      isUserAdmin = false;
+      logAdminAction("Admin logged out.");
+      openModal("You have been logged out of Admin Mode.");
+    }
+
+    function forgotPassword() {
+      const user = document.getElementById("adminUser").value;
+      if (user.toLowerCase() === ADMIN_USER.toLowerCase()) {
+        openModal(`A password reset link has been sent to ${ADMIN_EMAIL}.`);
+      } else {
+        openModal("Please enter the correct username to reset your password.");
+      }
+    }
+
+    function startLogListener() {
+      const logsCol = collection(db, adminLogsPath);
+      onSnapshot(logsCol, (snapshot) => {
+        const logs = [];
+        snapshot.forEach((doc) => {
+          const logData = doc.data();
+          logData.id = doc.id;
+          logs.push(logData);
+        });
+        displayAdminLogs(logs);
+      });
+    }
+
+    function displayAdminLogs(logs) {
+      const adminLogsTable = document.getElementById("adminLogs");
+      adminLogsTable.innerHTML = '';
+
+      if (logs.length === 0) {
+        adminLogsTable.innerHTML = `<tr><td colspan="100%" class="no-results">No admin logs to display.</td></tr>`;
         return;
       }
-      showExportPreview(type);
-    }
-    
-    // Export and Preview Functions
-    function showExportPreview(type) {
-        currentExportType = type;
-        const modal = document.getElementById('exportModal');
-        const previewType = document.getElementById('previewType');
-        const previewTableContainer = document.getElementById('previewTableContainer');
-        const confirmBtn = document.getElementById('confirmExportBtn');
-        const previewMessage = document.getElementById('previewMessage');
 
-        previewType.textContent = type.toUpperCase();
-        previewTableContainer.innerHTML = '';
-        
-        // Prepare data for preview (use plain text version)
-        const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-          .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-        
-        let previewHtml = `<table><thead><tr>`;
-        headers.forEach(header => {
-            previewHtml += `<th>${header}</th>`;
-        });
-        previewHtml += `</tr></thead><tbody>`;
-        
-        currentResults.forEach(result => {
-            previewHtml += `<tr>`;
-            headers.forEach(header => {
-                if (header === 'Line No') {
-                    previewHtml += `<td>${result.lineNo}</td>`;
-                } else if (header === 'Source File') {
-                    previewHtml += `<td>${result.display['Source File'] || ''}</td>`;
-                } else {
-                    const value = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-                    previewHtml += `<td>${value}</td>`;
-                }
-            });
-            previewHtml += `</tr>`;
-        });
-        previewHtml += `</tbody></table>`;
-        
-        previewTableContainer.innerHTML = previewHtml;
-
-        // Update message based on export type
-        switch(type) {
-            case 'excel':
-                previewMessage.textContent = 'Preview of data to be exported as an Excel file (.xlsx).';
-                break;
-            case 'csv':
-                previewMessage.textContent = 'Preview of data to be exported as a CSV file (.csv).';
-                break;
-            case 'json':
-                previewMessage.textContent = 'Preview of data to be exported as a JSON file (.json).';
-                break;
-            case 'print':
-                previewMessage.textContent = 'Preview of data for printing or saving as a PDF.';
-                break;
+      const headers = ["Select", "Timestamp", "User", "Action", "Delete"];
+      const headerRow = document.createElement("tr");
+      headers.forEach(headerText => {
+        const th = document.createElement("th");
+        th.className = "resizable-th";
+        th.innerText = headerText;
+        if (headerText !== "Select" && headerText !== "Delete") {
+          const resizer = document.createElement("div");
+          resizer.className = "resizer";
+          th.appendChild(resizer);
         }
+        headerRow.appendChild(th);
+      });
+      adminLogsTable.appendChild(headerRow);
 
-        // Set up the confirm button action
-        confirmBtn.onclick = () => {
-            if (currentExportType === 'excel') exportToExcel();
-            else if (currentExportType === 'csv') exportToCSV();
-            else if (currentExportType === 'json') exportToJSON();
-            else if (currentExportType === 'print') printResults();
-            closeExportPreview();
+      logs.forEach(logData => {
+        const row = document.createElement("tr");
+        row.className = "log-entry";
+        row.dataset.docId = logData.id;
+
+        const checkboxCell = document.createElement("td");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.onclick = updateSelectedLogsCount;
+        checkboxCell.appendChild(checkbox);
+        row.appendChild(checkboxCell);
+
+        const timestampCell = document.createElement("td");
+        timestampCell.innerText = new Date(logData.timestamp).toLocaleString();
+        row.appendChild(timestampCell);
+
+        const userCell = document.createElement("td");
+        userCell.innerText = logData.userName;
+        row.appendChild(userCell);
+
+        const actionCell = document.createElement("td");
+        actionCell.innerText = logData.action;
+        row.appendChild(actionCell);
+
+        const deleteCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-log-btn";
+        deleteButton.innerText = "X";
+        deleteButton.onclick = (e) => {
+          e.stopPropagation();
+          deleteSingleLog(logData.id);
+        };
+        deleteCell.appendChild(deleteButton);
+        row.appendChild(deleteCell);
+
+        row.onclick = (e) => {
+          if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+            checkbox.checked = !checkbox.checked;
+            updateSelectedLogsCount();
+          }
         };
 
-        modal.style.display = 'block';
-    }
-
-    function closeExportPreview() {
-        document.getElementById('exportModal').style.display = 'none';
-    }
-
-    function exportToExcel() { 
-      const workbook = XLSX.utils.book_new(); 
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-      
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
-        
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-          }
-        });
-        return row;
+        adminLogsTable.appendChild(row);
       });
-      
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Search Results"); 
-      XLSX.writeFile(workbook, "search_results.xlsx"); 
-    }
 
-    function exportToCSV() {
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-      
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
-        
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-          }
-        });
-        return row;
-      });
-      
-      let csvContent = headers.join(',') + '\n';
-      exportData.forEach(row => {
-        const values = headers.map(header => {
-          let value = row[header] || '';
-          value = String(value).replace(/"/g, '""');
-          if (String(value).includes(',')) {
-            value = `"${value}"`;
-          }
-          return value;
-        });
-        csvContent += values.join(',') + '\n';
-      });
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'search_results.csv';
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    }
-
-    function exportToJSON() {
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-      
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
-        
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-          }
-        });
-        return row;
-      });
-      
-      const jsonContent = JSON.stringify(exportData, null, 2);
-      
-      const blob = new Blob([jsonContent], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'search_results.json';
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    }
-
-    function printResults() { 
-      const printWindow = window.open("", "", "width=800,height=600"); 
-      const content = document.getElementById("resultText").innerHTML; 
-      printWindow.document.write(`<html><head><title>Search Results</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background-color: #e0f0ff; font-weight: bold; } .highlight-0 { background-color: #FFFF00; font-weight: bold; } .highlight-1 { background-color: #00FF00; font-weight: bold; } .highlight-2 { background-color: #00FFFF; font-weight: bold; } .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; } .highlight-4 { background-color: #FF8000; font-weight: bold; } .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }</style></head><body><h3>Search Results</h3>${content}</body></html>`); 
-      printWindow.document.close(); 
-      printWindow.focus(); 
-      printWindow.print(); 
-    }
-
-    function formatDuration(seconds) {
-      if (!seconds) return "N/A";
-      
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      
-      if (hours > 0) {
-        return `${hours}h ${minutes}m ${secs}s`;
-      } else if (minutes > 0) {
-        return `${minutes}m ${secs}s`;
-      } else {
-        return `${secs}s`;
-      }
-    }
-
-    function loadLogs() { 
-      const logTable = document.getElementById("logTable"); 
-      logTable.innerHTML = ""; 
-      
-      userSessions.forEach((session, index) => {
-        const loginTime = session.loginTime ? session.loginTime.toLocaleString() : "N/A";
-        const logoutTime = session.logoutTime ? session.logoutTime.toLocaleString() : "Still logged in";
-        const duration = session.duration ? formatDuration(session.duration) : "N/A";
-        const searchCount = session.searchCount || 0;
-        const lastSearch = session.lastSearch || "No searches";
-        
-        const isSelected = selectedLogs.has(index);
-        
-        logTable.innerHTML += `
-          <tr class="log-row ${isSelected ? 'selected' : ''}">
-            <td><input type="checkbox" class="log-checkbox" data-index="${index}" ${isSelected ? 'checked' : ''} onchange="toggleLogSelection(this, ${index})"></td>
-            <td>${session.user}</td>
-            <td>${loginTime}</td>
-            <td>${logoutTime}</td>
-            <td>${duration}</td>
-            <td>${searchCount}</td>
-            <td>${lastSearch}</td>
-          </tr>
-        `;
-      }); 
-      
+      initResizableColumns();
       updateSelectedLogsCount();
     }
 
-    window.onload = async function() { 
-      document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); 
-      
-      loadFileNicknames();
-      
-      await loadAvailableFiles();
-      
-      document.getElementById("userName").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") setUserName(); 
+    async function deleteSingleLog(docId) {
+      if (!isUserAdmin) {
+        openModal("You must be an admin to perform this action.");
+        return;
+      }
+      try {
+        await deleteDoc(doc(db, adminLogsPath, docId));
+        logAdminAction(`Deleted a single log with ID: ${docId}`);
+        openModal("Log deleted successfully.");
+      } catch (e) {
+        console.error("Error deleting single log:", e);
+        openModal("An error occurred while deleting the log.");
+      }
+    }
+
+    function updateSelectedLogsCount() {
+      const checkboxes = document.querySelectorAll("#adminLogs input[type='checkbox']");
+      const selectedLogsCount = document.getElementById("selectedLogsCount");
+      const logsActions = document.querySelector(".logs-actions");
+      let count = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          count++;
+          cb.closest('tr').classList.add('selected');
+        } else {
+          cb.closest('tr').classList.remove('selected');
+        }
       });
-      
-      document.getElementById("searchInput").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") performSearch(); 
-      }); 
+      selectedLogsCount.innerText = count;
 
-      document.getElementById("adminUser").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") checkAdminLogin(); 
-      }); 
+      if (count > 0) {
+        logsActions.style.display = 'flex';
+        logsActions.querySelector('button:first-child').style.display = 'block';
+        logsActions.querySelector('button:nth-child(2)').style.display = 'block';
+        logsActions.querySelector('.log-counter').style.display = 'block';
+      } else {
+        logsActions.style.display = 'none';
+      }
+    }
 
-      document.getElementById("adminPass").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") checkAdminLogin(); 
-      }); 
+    async function deleteSelectedLogs() {
+      if (!isUserAdmin) {
+        openModal("You must be an admin to perform this action.");
+        return;
+      }
+      const selectedLogs = document.querySelectorAll("#adminLogs input[type='checkbox']:checked");
+      if (selectedLogs.length === 0) {
+        openModal("Please select at least one log to delete.");
+        return;
+      }
 
-      document.getElementById("deletePassword").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") deleteAllLogs(); 
-      }); 
+      try {
+        const deletePromises = [];
+        selectedLogs.forEach(cb => {
+          const docId = cb.closest('tr').dataset.docId;
+          const docRef = doc(db, adminLogsPath, docId);
+          deletePromises.push(deleteDoc(docRef));
+        });
+        await Promise.all(deletePromises);
+        logAdminAction(`Deleted ${selectedLogs.length} logs.`);
+        openModal(`${selectedLogs.length} logs deleted successfully.`);
+      } catch (e) {
+        console.error("Error deleting logs:", e);
+        openModal("An error occurred while deleting logs.");
+      }
+    }
 
-      window.onclick = function(event) {
-        const modal = document.getElementById('exportModal');
-        if (event.target == modal) {
-          modal.style.display = 'none';
+    async function deleteAllLogs() {
+      if (!isUserAdmin) {
+        openModal("You must be an admin to perform this action.");
+        return;
+      }
+      const password = document.getElementById("deleteAllPassword").value;
+      if (password !== ADMIN_PASS) {
+        openModal("Incorrect password.");
+        return;
+      }
+
+      try {
+        const logsRef = collection(db, adminLogsPath);
+        const querySnapshot = await getDocs(logsRef);
+        const deletePromises = [];
+        querySnapshot.forEach(docSnapshot => {
+          deletePromises.push(deleteDoc(doc(db, adminLogsPath, docSnapshot.id)));
+        });
+        await Promise.all(deletePromises);
+        logAdminAction("Deleted all logs.");
+        openModal("All logs deleted successfully.");
+      } catch (e) {
+        console.error("Error deleting all logs:", e);
+        openModal("An error occurred while deleting all logs.");
+      }
+    }
+
+    function initResizableColumns() {
+      const table = document.getElementById("adminLogs");
+      const headers = table.querySelectorAll(".resizable-th");
+      let currentTh = null;
+      let startX = 0;
+      let startWidth = 0;
+
+      headers.forEach(header => {
+        const resizer = header.querySelector(".resizer");
+        if (resizer) {
+          resizer.addEventListener("mousedown", (e) => {
+            currentTh = header;
+            startX = e.pageX;
+            startWidth = currentTh.offsetWidth;
+            currentTh.classList.add("resizing");
+            document.addEventListener("mousemove", resize);
+            document.addEventListener("mouseup", stopResize);
+          });
+        }
+      });
+
+      function resize(e) {
+        if (currentTh) {
+          const newWidth = startWidth + (e.pageX - startX);
+          currentTh.style.width = newWidth + "px";
         }
       }
+
+      function stopResize() {
+        if (currentTh) {
+          currentTh.classList.remove("resizing");
+          currentTh = null;
+          document.removeEventListener("mousemove", resize);
+          document.removeEventListener("mouseup", stopResize);
+        }
+      }
+    }
+
+    function exportUserLogs() {
+      const selectedLogs = document.querySelectorAll("#adminLogs tr.log-entry.selected");
+      if (selectedLogs.length === 0) {
+        openModal("Please select at least one log to export.");
+        return;
+      }
+
+      let csv = "Timestamp,User,Action\n";
+      selectedLogs.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        const timestamp = cells[1].innerText.replace(/"/g, '""');
+        const user = cells[2].innerText.replace(/"/g, '""');
+        const action = cells[3].innerText.replace(/"/g, '""');
+        csv += `"${timestamp}","${user}","${action}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "selected_admin_logs.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      openModal("Selected logs exported successfully.");
+    }
+
+    // UI Configuration functions
+    function loadConfig() {
+      const savedConfig = JSON.parse(localStorage.getItem('uiConfig')) || {};
+      if (savedConfig.primaryColor) {
+        document.getElementById('primaryColor').value = savedConfig.primaryColor;
+      }
+      if (savedConfig.borderRadius) {
+        document.getElementById('borderRadius').value = savedConfig.borderRadius;
+      }
+      applyConfig();
+    }
+
+    function applyConfig() {
+      const primaryColor = document.getElementById('primaryColor').value;
+      const borderRadius = document.getElementById('borderRadius').value;
+      document.documentElement.style.setProperty('--primary-color', primaryColor);
+      document.documentElement.style.setProperty('--border-radius', `${borderRadius}px`);
+    }
+
+    function saveConfig() {
+      const primaryColor = document.getElementById('primaryColor').value;
+      const borderRadius = document.getElementById('borderRadius').value;
+      const config = { primaryColor, borderRadius };
+      localStorage.setItem('uiConfig', JSON.stringify(config));
+      openModal("UI configuration saved!");
+    }
+
+    function resetConfig() {
+      localStorage.removeItem('uiConfig');
+      document.getElementById('primaryColor').value = "#007acc";
+      document.getElementById('borderRadius').value = "8";
+      applyConfig();
+      openModal("UI configuration reset to default.");
+    }
+
+    // Data Source Configuration functions
+    async function addFile() {
+      const fileUrl = document.getElementById('fileUrl').value.trim();
+      const fileName = document.getElementById('fileName').value.trim() || 'Untitled';
+      if (!fileUrl) {
+        openModal("Please enter a valid file URL.");
+        return;
+      }
+      try {
+        const docRef = doc(db, excelFilesDocPath);
+        const docSnap = await getDoc(docRef);
+        const existingFiles = docSnap.exists() ? docSnap.data().files : [];
+        const updatedFiles = [...existingFiles, { url: fileUrl, name: fileName }];
+        await setDoc(docRef, { files: updatedFiles });
+        document.getElementById('fileUrl').value = '';
+        document.getElementById('fileName').value = '';
+        logAdminAction(`Added new file: ${fileName}`);
+        openModal("File added successfully!");
+      } catch (e) {
+        console.error("Error adding file:", e);
+        openModal("An error occurred while adding the file.");
+      }
+    }
+
+    async function deleteFile(index) {
+      if (!isUserAdmin) {
+        openModal("You must be an admin to perform this action.");
+        return;
+      }
+      try {
+        const docRef = doc(db, excelFilesDocPath);
+        const docSnap = await getDoc(docRef);
+        const files = docSnap.exists() ? docSnap.data().files : [];
+        const deletedFileName = files[index].name;
+        files.splice(index, 1);
+        await setDoc(docRef, { files: files });
+        logAdminAction(`Deleted file: ${deletedFileName}`);
+        openModal("File deleted successfully.");
+      } catch (e) {
+        console.error("Error deleting file:", e);
+        openModal("An error occurred while deleting the file.");
+      }
+    }
+
+    function startFileListener() {
+      const docRef = doc(db, excelFilesDocPath);
+      onSnapshot(docRef, (docSnap) => {
+        const files = docSnap.exists() ? docSnap.data().files : [];
+        loadAvailableFiles(files);
+        if (isUserAdmin) {
+          displayAdminFiles(files);
+        }
+      });
+    }
+
+    function displayAdminFiles(files) {
+      const table = document.getElementById("adminFiles");
+      table.innerHTML = '';
+      if (files.length === 0) {
+        table.innerHTML = `<tr><td colspan="100%" class="no-results">No files to display.</td></tr>`;
+        return;
+      }
+      const headerRow = document.createElement("tr");
+      headerRow.innerHTML = `<th>File Name</th><th>URL</th><th>Actions</th>`;
+      table.appendChild(headerRow);
+      files.forEach((file, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${file.name}</td>
+          <td>${file.url}</td>
+          <td><button onclick="deleteFile(${index})">Delete</button></td>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    // Function to handle tab switching, made globally accessible
+    function openTab(evt, tabName) {
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].style.display = "none";
+      }
+      const tabButtons = document.getElementsByClassName("tab-button");
+      for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove("active");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.classList.add("active");
+    }
+    
+    // Assign functions to the window object to make them globally available to the HTML `onclick` attributes
+    window.openTab = openTab;
+    window.setUserName = setUserName;
+    window.performSearch = performSearch;
+    window.checkAdminLogin = checkAdminLogin;
+    window.logoutAdmin = logoutAdmin;
+    window.forgotPassword = forgotPassword;
+    window.deleteSelectedLogs = deleteSelectedLogs;
+    window.exportUserLogs = exportUserLogs;
+    window.deleteAllLogs = deleteAllLogs;
+    window.closeModal = closeModal;
+    window.applyConfig = applyConfig;
+    window.saveConfig = saveConfig;
+    window.resetConfig = resetConfig;
+    window.addFile = addFile;
+    window.deleteFile = deleteFile;
+
+    // Initialize the application
+    window.onload = async function() {
+      await initAuth();
+      document.getElementById("lastUpdated").innerText = new Date().toLocaleString();
+      loadConfig();
+
+      // Add event listener for file selection change
+      document.getElementById("fileSelect").addEventListener("change", updateSelectedFilesDisplay);
+
+      // Add keyboard event listeners
+      document.getElementById("userName").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") setUserName();
+      });
+      document.getElementById("searchInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") performSearch();
+      });
+      document.getElementById("adminUser").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") checkAdminLogin();
+      });
+      document.getElementById("adminPass").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") checkAdminLogin();
+      });
+      document.getElementById("deleteAllPassword").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") deleteAllLogs();
+      });
     };
   </script>
 </body>
