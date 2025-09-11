@@ -7,14 +7,21 @@
   <style>
     :root {
       --primary-color: #007acc;
+      --secondary-color: #005f99;
+      --danger-color: #f44336;
+      --success-color: #4caf50;
+      --warning-color: #ff9800;
       --border-radius: 8px;
+      --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
     }
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(to right, #f0f8ff, #e6f7ff);
       color: #333;
       padding: 15px;
       margin: 0;
+      line-height: 1.6;
     }
     .container {
       max-width: 1200px;
@@ -24,7 +31,7 @@
       color: var(--primary-color);
       text-shadow: 1px 1px 2px #ccc;
       margin-bottom: 5px;
-      font-size: 1.8rem;
+      font-size: 2rem;
     }
     .author {
       color: #888;
@@ -38,13 +45,13 @@
       border: 2px solid var(--primary-color);
       border-radius: var(--border-radius);
       box-sizing: border-box;
-      max-width: 300px; /* Constrained width */
+      max-width: 300px;
       width: 100%;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       font-size: 1rem;
     }
     input[type="text"]:focus, input[type="password"]:focus, select:focus, .small-input:focus {
-      border-color: #005f99;
+      border-color: var(--secondary-color);
       box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
       outline: none;
     }
@@ -64,34 +71,34 @@
       border-radius: var(--border-radius);
       cursor: pointer;
       font-size: 1rem;
-      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      transition: var(--transition);
       flex-grow: 0;
       width: auto;
     }
     button:hover, .file-select-container label:hover {
-      background-color: #005f99;
+      background-color: var(--secondary-color);
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--box-shadow);
     }
     button:active {
       transform: translateY(0);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     .logout-btn {
-      background-color: #f44336;
+      background-color: var(--danger-color);
     }
     .logout-btn:hover {
       background-color: #d32f2f;
     }
     .section-viewer {
       width: 100%;
-      height: 60vh; /* Responsive height */
+      height: 60vh;
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
       margin-top: 20px;
       overflow-y: auto;
       background-color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--box-shadow);
       position: relative;
     }
     .file-select-container {
@@ -212,7 +219,7 @@
     .modal {
       display: none;
       position: fixed;
-      z-index: 1;
+      z-index: 1000;
       left: 0;
       top: 0;
       width: 100%;
@@ -227,8 +234,9 @@
       padding: 20px;
       border: 1px solid #888;
       width: 80%;
+      max-width: 500px;
       border-radius: var(--border-radius);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--box-shadow);
     }
     .modal-content h2 {
       color: var(--primary-color);
@@ -376,6 +384,61 @@
       width: 100%;
       max-width: 500px;
     }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 5px;
+    }
+    .pagination button {
+      padding: 8px 12px;
+      background-color: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .pagination button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      color: white;
+      z-index: 1001;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .notification.success {
+      background-color: var(--success-color);
+    }
+    .notification.error {
+      background-color: var(--danger-color);
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    @media (max-width: 768px) {
+      .input-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .input-row input {
+        max-width: 100%;
+      }
+      .button-group, .small-button-group {
+        flex-direction: column;
+      }
+      .tab-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -421,6 +484,7 @@
         <div id="excel-viewer" class="section-viewer">
           <table id="searchResults"></table>
         </div>
+        <div id="pagination" class="pagination"></div>
       </div>
     </div>
 
@@ -499,13 +563,38 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <div id="notification" class="notification"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script type="module">
-    // Firebase imports
+    // Firebase imports - Updated to latest version
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, onSnapshot, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+    import { 
+      getAuth, 
+      signInWithCustomToken, 
+      signInAnonymously, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      collection, 
+      query, 
+      where, 
+      addDoc, 
+      onSnapshot, 
+      getDocs, 
+      deleteDoc,
+      serverTimestamp,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { 
+      getStorage, 
+      ref, 
+      getDownloadURL 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     // Global variables (will be populated by the canvas environment)
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -527,10 +616,15 @@
     const excelFilesDocPath = `artifacts/${appId}/public/data/excel_files/file_list`;
     const userSearchLogsPath = `artifacts/${appId}/users/${userId}/search_logs`;
 
+    // Search results pagination
+    let currentPage = 1;
+    const resultsPerPage = 50;
+    let allSearchResults = [];
+
     // Initialize Firebase
     function initializeFirebase() {
       if (Object.keys(firebaseConfig).length === 0) {
-        console.error("Firebase config is missing. Cannot initialize Firebase.");
+        showNotification("Firebase config is missing. Cannot initialize Firebase.", "error");
         return null;
       }
       try {
@@ -540,6 +634,7 @@
         return { app, auth, db };
       } catch (error) {
         console.error("Error initializing Firebase:", error);
+        showNotification("Error initializing Firebase. Please check your configuration.", "error");
         return null;
       }
     }
@@ -558,15 +653,44 @@
         } else {
           await signInAnonymously(auth);
         }
-        userId = auth.currentUser.uid;
-        console.log("Authenticated with Firebase. User ID:", userId);
-        startLogListener();
-        startFileListener();
+        
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            userId = user.uid;
+            console.log("Authenticated with Firebase. User ID:", userId);
+            startLogListener();
+            startFileListener();
+            
+            // Load user name from localStorage if available
+            const savedUserName = localStorage.getItem('userName');
+            if (savedUserName) {
+              currentUserName = savedUserName;
+              document.getElementById("userName").value = currentUserName;
+              document.getElementById("currentUserDisplay").innerText = `Current User: ${currentUserName}`;
+            }
+          } else {
+            userId = 'anonymous-' + crypto.randomUUID();
+            console.log("Signed in anonymously. User ID:", userId);
+          }
+        });
       } catch (error) {
         console.error("Firebase Authentication failed:", error);
         userId = 'anonymous-' + crypto.randomUUID();
         console.log("Signed in anonymously. User ID:", userId);
+        showNotification("Authentication failed. Using anonymous mode.", "error");
       }
+    }
+
+    // Notification system
+    function showNotification(message, type = "success") {
+      const notification = document.getElementById("notification");
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.classList.add("show");
+      
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
     }
 
     // Modal functions
@@ -588,10 +712,11 @@
           userId: userId,
           userName: currentUserName,
           searchTerm: searchTerm,
-          timestamp: new Date().toISOString()
+          timestamp: serverTimestamp()
         });
       } catch (e) {
         console.error("Error adding search log document:", e);
+        showNotification("Error logging search activity.", "error");
       }
     }
 
@@ -604,10 +729,11 @@
           userId: userId,
           userName: currentUserName,
           action: action,
-          timestamp: new Date().toISOString()
+          timestamp: serverTimestamp()
         });
       } catch (e) {
         console.error("Error adding admin log document:", e);
+        showNotification("Error logging admin action.", "error");
       }
     }
 
@@ -616,7 +742,11 @@
       const userNameInput = document.getElementById("userName");
       currentUserName = userNameInput.value.trim() || "Unknown";
       document.getElementById("currentUserDisplay").innerText = `Current User: ${currentUserName}`;
-      openModal(`User name set to: ${currentUserName}`);
+      
+      // Save to localStorage
+      localStorage.setItem('userName', currentUserName);
+      
+      showNotification(`User name set to: ${currentUserName}`);
     }
 
     // Load available files from Firestore (nicknames to URLs)
@@ -659,14 +789,16 @@
       const resultsTable = document.getElementById("searchResults");
       resultsTable.innerHTML = '';
       document.getElementById("resultHeader").innerText = "Search Results:";
+      document.getElementById("pagination").innerHTML = '';
+      allSearchResults = [];
 
       if (!selectedUrl) {
-        openModal("Please select a file first.");
+        showNotification("Please select a file first.", "error");
         return;
       }
 
       if (!searchInput) {
-        openModal("Please enter a search term.");
+        showNotification("Please enter a search term.", "error");
         return;
       }
 
@@ -685,9 +817,13 @@
         workbook.SheetNames.forEach(sheetName => {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          if (jsonData.length === 0) return;
+          
           const headers = jsonData[0];
           for (let i = 1; i < jsonData.length; i++) {
             const row = jsonData[i];
+            if (!row || row.length === 0) continue;
+            
             const rowString = JSON.stringify(row).toLowerCase();
             if (rowString.includes(searchInput.toLowerCase())) {
               const rowObject = {};
@@ -702,26 +838,34 @@
         spinner.style.display = 'none';
 
         if (foundResults.length > 0) {
-          displayResults(foundResults);
+          allSearchResults = foundResults;
+          displayResults(1); // Show first page
         } else {
           resultsTable.innerHTML = `<tr><td colspan="100%" class="no-results">No results found for "${searchInput}".</td></tr>`;
         }
       } catch (error) {
         spinner.style.display = 'none';
         console.error("Error fetching or processing Excel file:", error);
-        openModal("Failed to load or search the file. Please try again.");
+        showNotification("Failed to load or search the file. Please try again.", "error");
       }
     }
 
-    function displayResults(results) {
+    function displayResults(page) {
       const resultsTable = document.getElementById("searchResults");
       resultsTable.innerHTML = '';
-      if (results.length === 0) {
+      currentPage = page;
+      
+      if (allSearchResults.length === 0) {
         resultsTable.innerHTML = `<tr><td colspan="100%" class="no-results">No results to display.</td></tr>`;
         return;
       }
 
-      const headers = Object.keys(results[0]);
+      const totalPages = Math.ceil(allSearchResults.length / resultsPerPage);
+      const startIndex = (page - 1) * resultsPerPage;
+      const endIndex = Math.min(startIndex + resultsPerPage, allSearchResults.length);
+      const pageResults = allSearchResults.slice(startIndex, endIndex);
+
+      const headers = Object.keys(allSearchResults[0]);
       const headerRow = document.createElement("tr");
       headers.forEach(headerText => {
         const th = document.createElement("th");
@@ -730,7 +874,7 @@
       });
       resultsTable.appendChild(headerRow);
 
-      results.forEach(rowData => {
+      pageResults.forEach(rowData => {
         const row = document.createElement("tr");
         headers.forEach(header => {
           const cell = document.createElement("td");
@@ -739,6 +883,25 @@
         });
         resultsTable.appendChild(row);
       });
+
+      // Add pagination controls
+      const paginationDiv = document.getElementById("pagination");
+      paginationDiv.innerHTML = '';
+      
+      if (totalPages > 1) {
+        for (let i = 1; i <= totalPages; i++) {
+          const pageButton = document.createElement("button");
+          pageButton.innerText = i;
+          pageButton.classList.add("pagination-button");
+          if (i === page) {
+            pageButton.classList.add("active");
+          }
+          pageButton.onclick = () => displayResults(i);
+          paginationDiv.appendChild(pageButton);
+        }
+      }
+      
+      document.getElementById("resultHeader").innerText = `Search Results: ${allSearchResults.length} found (showing ${startIndex + 1}-${endIndex})`;
     }
 
     // Admin Log Functions
@@ -754,6 +917,7 @@
         adminView.style.display = 'block';
         isUserAdmin = true;
         logAdminAction("Admin logged in.");
+        showNotification("Admin login successful!");
       } else {
         loginMessage.innerText = "Invalid credentials.";
         loginMessage.className = "status-message status-error";
@@ -769,7 +933,7 @@
       document.getElementById("admin-view").style.display = 'none';
       isUserAdmin = false;
       logAdminAction("Admin logged out.");
-      openModal("You have been logged out of Admin Mode.");
+      showNotification("You have been logged out of Admin Mode.");
     }
 
     function forgotPassword() {
@@ -782,8 +946,11 @@
     }
 
     function startLogListener() {
+      if (!db) return;
       const logsCol = collection(db, adminLogsPath);
-      onSnapshot(logsCol, (snapshot) => {
+      const q = query(logsCol, orderBy("timestamp", "desc"));
+      
+      onSnapshot(q, (snapshot) => {
         const logs = [];
         snapshot.forEach((doc) => {
           const logData = doc.data();
@@ -791,6 +958,9 @@
           logs.push(logData);
         });
         displayAdminLogs(logs);
+      }, (error) => {
+        console.error("Error listening to admin logs:", error);
+        showNotification("Error loading admin logs.", "error");
       });
     }
 
@@ -831,11 +1001,11 @@
         row.appendChild(checkboxCell);
 
         const timestampCell = document.createElement("td");
-        timestampCell.innerText = new Date(logData.timestamp).toLocaleString();
+        timestampCell.innerText = logData.timestamp ? new Date(logData.timestamp.toDate()).toLocaleString() : 'N/A';
         row.appendChild(timestampCell);
 
         const userCell = document.createElement("td");
-        userCell.innerText = logData.userName;
+        userCell.innerText = logData.userName || 'Unknown';
         row.appendChild(userCell);
 
         const actionCell = document.createElement("td");
@@ -869,16 +1039,16 @@
 
     async function deleteSingleLog(docId) {
       if (!isUserAdmin) {
-        openModal("You must be an admin to perform this action.");
+        showNotification("You must be an admin to perform this action.", "error");
         return;
       }
       try {
         await deleteDoc(doc(db, adminLogsPath, docId));
         logAdminAction(`Deleted a single log with ID: ${docId}`);
-        openModal("Log deleted successfully.");
+        showNotification("Log deleted successfully.");
       } catch (e) {
         console.error("Error deleting single log:", e);
-        openModal("An error occurred while deleting the log.");
+        showNotification("An error occurred while deleting the log.", "error");
       }
     }
 
@@ -909,12 +1079,12 @@
 
     async function deleteSelectedLogs() {
       if (!isUserAdmin) {
-        openModal("You must be an admin to perform this action.");
+        showNotification("You must be an admin to perform this action.", "error");
         return;
       }
       const selectedLogs = document.querySelectorAll("#adminLogs input[type='checkbox']:checked");
       if (selectedLogs.length === 0) {
-        openModal("Please select at least one log to delete.");
+        showNotification("Please select at least one log to delete.", "error");
         return;
       }
 
@@ -927,21 +1097,21 @@
         });
         await Promise.all(deletePromises);
         logAdminAction(`Deleted ${selectedLogs.length} logs.`);
-        openModal(`${selectedLogs.length} logs deleted successfully.`);
+        showNotification(`${selectedLogs.length} logs deleted successfully.`);
       } catch (e) {
         console.error("Error deleting logs:", e);
-        openModal("An error occurred while deleting logs.");
+        showNotification("An error occurred while deleting logs.", "error");
       }
     }
 
     async function deleteAllLogs() {
       if (!isUserAdmin) {
-        openModal("You must be an admin to perform this action.");
+        showNotification("You must be an admin to perform this action.", "error");
         return;
       }
       const password = document.getElementById("deleteAllPassword").value;
       if (password !== ADMIN_PASS) {
-        openModal("Incorrect password.");
+        showNotification("Incorrect password.", "error");
         return;
       }
 
@@ -954,10 +1124,11 @@
         });
         await Promise.all(deletePromises);
         logAdminAction("Deleted all logs.");
-        openModal("All logs deleted successfully.");
+        showNotification("All logs deleted successfully.");
+        document.getElementById("deleteAllPassword").value = '';
       } catch (e) {
         console.error("Error deleting all logs:", e);
-        openModal("An error occurred while deleting all logs.");
+        showNotification("An error occurred while deleting all logs.", "error");
       }
     }
 
@@ -1002,7 +1173,7 @@
     function exportUserLogs() {
       const selectedLogs = document.querySelectorAll("#adminLogs tr.log-entry.selected");
       if (selectedLogs.length === 0) {
-        openModal("Please select at least one log to export.");
+        showNotification("Please select at least one log to export.", "error");
         return;
       }
 
@@ -1023,7 +1194,7 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      openModal("Selected logs exported successfully.");
+      showNotification("Selected logs exported successfully.");
     }
 
     // UI Configuration functions
@@ -1050,7 +1221,7 @@
       const borderRadius = document.getElementById('borderRadius').value;
       const config = { primaryColor, borderRadius };
       localStorage.setItem('uiConfig', JSON.stringify(config));
-      openModal("UI configuration saved!");
+      showNotification("UI configuration saved!");
     }
 
     function resetConfig() {
@@ -1058,7 +1229,7 @@
       document.getElementById('primaryColor').value = "#007acc";
       document.getElementById('borderRadius').value = "8";
       applyConfig();
-      openModal("UI configuration reset to default.");
+      showNotification("UI configuration reset to default.");
     }
 
     // Data Source Configuration functions
@@ -1069,31 +1240,44 @@
       const fileName = document.getElementById('fileName').value.trim() || 'Untitled';
 
       if (!fileUrl) {
-        openModal("Please enter a valid file URL.");
+        showNotification("Please enter a valid file URL.", "error");
         return;
       }
       
-      const rawUrl = `https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/${fileUrl.split('/').pop()}`;
+      // Convert GitHub URL to raw format
+      let rawUrl = fileUrl;
+      if (fileUrl.includes('github.com') && !fileUrl.includes('raw.githubusercontent.com')) {
+        rawUrl = fileUrl
+          .replace('github.com', 'raw.githubusercontent.com')
+          .replace('/blob/', '/');
+      }
 
       try {
         const docRef = doc(db, excelFilesDocPath);
         const docSnap = await getDoc(docRef);
         const existingFiles = docSnap.exists() ? docSnap.data().files : [];
+        
+        // Check if file already exists
+        if (existingFiles.some(file => file.url === rawUrl)) {
+          showNotification("This file URL already exists in the list.", "error");
+          return;
+        }
+        
         const updatedFiles = [...existingFiles, { url: rawUrl, name: fileName }];
         await setDoc(docRef, { files: updatedFiles });
         document.getElementById('fileUrl').value = '';
         document.getElementById('fileName').value = '';
         logAdminAction(`Added new file: ${fileName}`);
-        openModal("File added successfully!");
+        showNotification("File added successfully!");
       } catch (e) {
         console.error("Error adding file:", e);
-        openModal("An error occurred while adding the file.");
+        showNotification("An error occurred while adding the file.", "error");
       }
     }
 
     async function deleteFile(index) {
       if (!isUserAdmin) {
-        openModal("You must be an admin to perform this action.");
+        showNotification("You must be an admin to perform this action.", "error");
         return;
       }
       try {
@@ -1104,14 +1288,15 @@
         files.splice(index, 1);
         await setDoc(docRef, { files: files });
         logAdminAction(`Deleted file: ${deletedFileName}`);
-        openModal("File deleted successfully.");
+        showNotification("File deleted successfully.");
       } catch (e) {
         console.error("Error deleting file:", e);
-        openModal("An error occurred while deleting the file.");
+        showNotification("An error occurred while deleting the file.", "error");
       }
     }
 
     function startFileListener() {
+      if (!db) return;
       const docRef = doc(db, excelFilesDocPath);
       onSnapshot(docRef, (docSnap) => {
         const files = docSnap.exists() ? docSnap.data().files : [];
@@ -1119,6 +1304,9 @@
         if (isUserAdmin) {
           displayAdminFiles(files);
         }
+      }, (error) => {
+        console.error("Error listening to files:", error);
+        showNotification("Error loading files.", "error");
       });
     }
 
@@ -1198,6 +1386,14 @@
       });
       document.getElementById("deleteAllPassword").addEventListener("keypress", function(e) {
         if (e.key === "Enter") deleteAllLogs();
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', function(event) {
+        const modal = document.getElementById('messageModal');
+        if (event.target === modal) {
+          closeModal();
+        }
       });
     };
   </script>
