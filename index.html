@@ -5,12 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Excel Search Dashboard</title>
   <style>
+    :root {
+      --bg-color: linear-gradient(to right, #f0f8ff, #e6f7ff);
+      --text-color: #333;
+      --button-color: #007acc;
+      --button-hover-color: #005f99;
+      --font-family: 'Segoe UI', sans-serif;
+      --header-color: #007acc;
+      --table-header-bg: #e0f0ff;
+      --table-border: #ddd;
+      --result-bg: #f9f9f9;
+    }
+    
     body { 
-      font-family: 'Segoe UI', sans-serif; 
-      background: linear-gradient(to right, #f0f8ff, #e6f7ff); 
-      color: #333; 
+      font-family: var(--font-family); 
+      background: var(--bg-color); 
+      color: var(--text-color); 
       padding: 15px; 
       margin: 0;
+      transition: all 0.3s ease;
     }
     .container {
       max-width: 100%;
@@ -18,7 +31,7 @@
       padding: 10px;
     }
     h1 { 
-      color: #007acc; 
+      color: var(--header-color); 
       text-shadow: 1px 1px 2px #ccc; 
       margin-bottom: 5px; 
       font-size: 1.8rem;
@@ -32,11 +45,13 @@
     input[type="text"], input[type="password"] { 
       padding: 12px; 
       margin: 10px 0; 
-      border: 2px solid #007acc; 
+      border: 2px solid var(--button-color); 
       border-radius: 5px; 
       box-sizing: border-box;
       font-size: 16px;
       transition: width 0.3s ease-in-out;
+      background: white;
+      color: #333;
     }
     #userName {
       width: 150px;
@@ -66,16 +81,18 @@
     select#fileSelect {
       padding: 8px 12px;
       margin: 10px 0;
-      border: 2px solid #007acc;
+      border: 2px solid var(--button-color);
       border-radius: 5px;
       font-size: 16px;
+      background: white;
+      color: #333;
     }
     button { 
       padding: 12px 18px; 
       margin: 8px 5px; 
       border: none; 
       border-radius: 5px; 
-      background-color: #007acc; 
+      background-color: var(--button-color); 
       color: white; 
       cursor: pointer; 
       box-shadow: 1px 1px 5px #aaa; 
@@ -83,7 +100,7 @@
       font-size: 16px;
     }
     button:hover { 
-      background-color: #005f99; 
+      background-color: var(--button-hover-color); 
       transform: translateY(-2px);
       box-shadow: 2px 4px 8px #999;
     }
@@ -92,7 +109,7 @@
     }
     #results, #adminPanel, #adminLogin { 
       margin-top: 20px; 
-      background-color: #f9f9f9; 
+      background-color: var(--result-bg); 
       padding: 20px; 
       border-radius: 8px; 
       box-shadow: 0 0 10px #ccc; 
@@ -101,11 +118,11 @@
       min-width: 600px;
       border-collapse: collapse; 
       margin-bottom: 10px; 
-      width: 100%; /* Occupy full width */
-      border: 1px solid #ddd; /* Add border */
+      width: 100%;
+      border: 1px solid var(--table-border);
     }
     th, td { 
-      border: 1px solid #ddd; 
+      border: 1px solid var(--table-border); 
       padding: 10px; 
       text-align: left; 
       font-size: 0.9rem;
@@ -113,7 +130,7 @@
       position: relative;
     }
     th { 
-      background-color: #e0f0ff; 
+      background-color: var(--table-header-bg); 
       font-weight: bold; 
       cursor: pointer; 
       position: relative; 
@@ -263,6 +280,99 @@
       border: 1px solid #ff6b6b;
     }
     
+    /* Theme Customization Panel */
+    #themePanel {
+      position: fixed;
+      right: -320px;
+      top: 0;
+      width: 300px;
+      height: 100%;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      padding: 20px;
+      overflow-y: auto;
+      transition: right 0.3s ease;
+    }
+    
+    #themePanel.open {
+      right: 0;
+    }
+    
+    .theme-option {
+      margin-bottom: 15px;
+    }
+    
+    .theme-option label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .theme-toggle {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1001;
+      background-color: var(--button-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .color-preview {
+      width: 30px;
+      height: 30px;
+      display: inline-block;
+      border: 1px solid #ccc;
+      vertical-align: middle;
+      margin-left: 10px;
+      border-radius: 4px;
+    }
+    
+    .preset-themes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .preset-theme {
+      height: 40px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .preset-theme.light {
+      background: linear-gradient(to right, #f0f8ff, #e6f7ff);
+    }
+    
+    .preset-theme.dark {
+      background: linear-gradient(to right, #2c3e50, #34495e);
+    }
+    
+    .preset-theme.warm {
+      background: linear-gradient(to right, #fff8f0, #fff0e6);
+    }
+    
+    .preset-theme.cool {
+      background: linear-gradient(to right, #f0f0ff, #e6e6ff);
+    }
+    
+    .preset-theme.nature {
+      background: linear-gradient(to right, #f0fff0, #e6ffe6);
+    }
+    
+    .preset-theme.sunset {
+      background: linear-gradient(to right, #fff0f0, #ffe6e6);
+    }
+    
     /* Mobile responsiveness */
     @media (max-width: 768px) {
       body {
@@ -320,6 +430,11 @@
       
       .resize-handle {
         display: none;
+      }
+      
+      #themePanel {
+        width: 85%;
+        right: -85%;
       }
     }
 
@@ -505,6 +620,72 @@
     </div>
   </div>
 
+  <!-- Theme Panel -->
+  <div id="themePanel">
+    <h3>🎨 Customize Theme</h3>
+    
+    <div class="theme-option">
+      <label for="bgColor">Background Color 1:</label>
+      <input type="color" id="bgColor" value="#f0f8ff">
+      <span class="color-preview" id="bgPreview"></span>
+    </div>
+    
+    <div class="theme-option">
+      <label for="bgColor2">Background Color 2:</label>
+      <input type="color" id="bgColor2" value="#e6f7ff">
+      <span class="color-preview" id="bgPreview2"></span>
+    </div>
+    
+    <div class="theme-option">
+      <label for="textColor">Text Color:</label>
+      <input type="color" id="textColor" value="#333333">
+      <span class="color-preview" id="textPreview"></span>
+    </div>
+    
+    <div class="theme-option">
+      <label for="buttonColor">Button Color:</label>
+      <input type="color" id="buttonColor" value="#007acc">
+      <span class="color-preview" id="buttonPreview"></span>
+    </div>
+    
+    <div class="theme-option">
+      <label for="headerColor">Header Color:</label>
+      <input type="color" id="headerColor" value="#007acc">
+      <span class="color-preview" id="headerPreview"></span>
+    </div>
+    
+    <div class="theme-option">
+      <label for="fontFamily">Font Family:</label>
+      <select id="fontFamily">
+        <option value="'Segoe UI', sans-serif">Segoe UI</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+      </select>
+    </div>
+    
+    <h4>Preset Themes:</h4>
+    <div class="preset-themes">
+      <div class="preset-theme light" onclick="applyPreset('light')" title="Light Theme"></div>
+      <div class="preset-theme dark" onclick="applyPreset('dark')" title="Dark Theme"></div>
+      <div class="preset-theme warm" onclick="applyPreset('warm')" title="Warm Theme"></div>
+      <div class="preset-theme cool" onclick="applyPreset('cool')" title="Cool Theme"></div>
+      <div class="preset-theme nature" onclick="applyPreset('nature')" title="Nature Theme"></div>
+      <div class="preset-theme sunset" onclick="applyPreset('sunset')" title="Sunset Theme"></div>
+    </div>
+    
+    <div class="button-group" style="margin-top: 20px;">
+      <button onclick="saveTheme()">💾 Save Theme</button>
+      <button onclick="resetTheme()" class="logout-button">🔄 Reset to Default</button>
+      <button onclick="toggleThemePanel()" class="logout-button">Close</button>
+    </div>
+  </div>
+  
+  <button class="theme-toggle" onclick="toggleThemePanel()">🎨</button>
+
   <!-- Export Preview Modal -->
   <div id="exportModal" class="modal">
     <div class="modal-content">
@@ -541,6 +722,173 @@
     let startX = 0;
     let startWidth = 0;
     let currentExportType = null;
+
+    // Theme customization functions
+    function toggleThemePanel() {
+      document.getElementById('themePanel').classList.toggle('open');
+    }
+    
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('userTheme');
+      if (savedTheme) {
+        const theme = JSON.parse(savedTheme);
+        applyTheme(theme);
+        
+        // Set form values to match current theme
+        document.getElementById('bgColor').value = theme.bgColor;
+        document.getElementById('bgColor2').value = theme.bgColor2;
+        document.getElementById('textColor').value = theme.textColor;
+        document.getElementById('buttonColor').value = theme.buttonColor;
+        document.getElementById('headerColor').value = theme.headerColor;
+        document.getElementById('fontFamily').value = theme.fontFamily;
+        
+        updateColorPreviews();
+      }
+    }
+    
+    function applyTheme(theme) {
+      document.documentElement.style.setProperty('--bg-color', `linear-gradient(to right, ${theme.bgColor}, ${theme.bgColor2})`);
+      document.documentElement.style.setProperty('--text-color', theme.textColor);
+      document.documentElement.style.setProperty('--button-color', theme.buttonColor);
+      document.documentElement.style.setProperty('--button-hover-color', adjustColor(theme.buttonColor, -30));
+      document.documentElement.style.setProperty('--header-color', theme.headerColor);
+      document.documentElement.style.setProperty('--font-family', theme.fontFamily);
+    }
+    
+    function saveTheme() {
+      const theme = {
+        bgColor: document.getElementById('bgColor').value,
+        bgColor2: document.getElementById('bgColor2').value,
+        textColor: document.getElementById('textColor').value,
+        buttonColor: document.getElementById('buttonColor').value,
+        headerColor: document.getElementById('headerColor').value,
+        fontFamily: document.getElementById('fontFamily').value
+      };
+      
+      localStorage.setItem('userTheme', JSON.stringify(theme));
+      applyTheme(theme);
+      alert("Theme saved successfully!");
+    }
+    
+    function resetTheme() {
+      const defaultTheme = {
+        bgColor: "#f0f8ff",
+        bgColor2: "#e6f7ff",
+        textColor: "#333333",
+        buttonColor: "#007acc",
+        headerColor: "#007acc",
+        fontFamily: "'Segoe UI', sans-serif"
+      };
+      
+      localStorage.removeItem('userTheme');
+      applyTheme(defaultTheme);
+      
+      // Reset form values
+      document.getElementById('bgColor').value = defaultTheme.bgColor;
+      document.getElementById('bgColor2').value = defaultTheme.bgColor2;
+      document.getElementById('textColor').value = defaultTheme.textColor;
+      document.getElementById('buttonColor').value = defaultTheme.buttonColor;
+      document.getElementById('headerColor').value = defaultTheme.headerColor;
+      document.getElementById('fontFamily').value = defaultTheme.fontFamily;
+      
+      updateColorPreviews();
+      
+      alert("Theme reset to default!");
+    }
+    
+    function applyPreset(presetName) {
+      const presets = {
+        light: {
+          bgColor: "#f0f8ff",
+          bgColor2: "#e6f7ff",
+          textColor: "#333333",
+          buttonColor: "#007acc",
+          headerColor: "#007acc",
+          fontFamily: "'Segoe UI', sans-serif"
+        },
+        dark: {
+          bgColor: "#2c3e50",
+          bgColor2: "#34495e",
+          textColor: "#ecf0f1",
+          buttonColor: "#3498db",
+          headerColor: "#3498db",
+          fontFamily: "Arial, sans-serif"
+        },
+        warm: {
+          bgColor: "#fff8f0",
+          bgColor2: "#fff0e6",
+          textColor: "#333333",
+          buttonColor: "#e67e22",
+          headerColor: "#e67e22",
+          fontFamily: "Georgia, serif"
+        },
+        cool: {
+          bgColor: "#f0f0ff",
+          bgColor2: "#e6e6ff",
+          textColor: "#333366",
+          buttonColor: "#2980b9",
+          headerColor: "#2980b9",
+          fontFamily: "'Courier New', monospace"
+        },
+        nature: {
+          bgColor: "#f0fff0",
+          bgColor2: "#e6ffe6",
+          textColor: "#003300",
+          buttonColor: "#27ae60",
+          headerColor: "#27ae60",
+          fontFamily: "Arial, sans-serif"
+        },
+        sunset: {
+          bgColor: "#fff0f0",
+          bgColor2: "#ffe6e6",
+          textColor: "#660000",
+          buttonColor: "#e74c3c",
+          headerColor: "#e74c3c",
+          fontFamily: "'Times New Roman', serif"
+        }
+      };
+      
+      if (presets[presetName]) {
+        applyTheme(presets[presetName]);
+        
+        // Update form values
+        document.getElementById('bgColor').value = presets[presetName].bgColor;
+        document.getElementById('bgColor2').value = presets[presetName].bgColor2;
+        document.getElementById('textColor').value = presets[presetName].textColor;
+        document.getElementById('buttonColor').value = presets[presetName].buttonColor;
+        document.getElementById('headerColor').value = presets[presetName].headerColor;
+        document.getElementById('fontFamily').value = presets[presetName].fontFamily;
+        
+        updateColorPreviews();
+      }
+    }
+    
+    function updateColorPreviews() {
+      document.getElementById('bgPreview').style.backgroundColor = document.getElementById('bgColor').value;
+      document.getElementById('bgPreview2').style.backgroundColor = document.getElementById('bgColor2').value;
+      document.getElementById('textPreview').style.backgroundColor = document.getElementById('textColor').value;
+      document.getElementById('buttonPreview').style.backgroundColor = document.getElementById('buttonColor').value;
+      document.getElementById('headerPreview').style.backgroundColor = document.getElementById('headerColor').value;
+    }
+    
+    // Helper function to adjust color brightness
+    function adjustColor(hex, percent) {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      
+      // Convert to RGB
+      let r = parseInt(hex.substring(0, 2), 16);
+      let g = parseInt(hex.substring(2, 4), 16);
+      let b = parseInt(hex.substring(4, 6), 16);
+      
+      // Adjust brightness
+      r = Math.max(0, Math.min(255, r + percent));
+      g = Math.max(0, Math.min(255, g + percent));
+      b = Math.max(0, Math.min(255, b + percent));
+      
+      // Convert back to hex
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
 
     // Remove file extension from filename
     function removeExtension(filename) {
@@ -1412,6 +1760,7 @@
       document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); 
       
       loadFileNicknames();
+      loadTheme(); // Load user's saved theme
       
       await loadAvailableFiles();
       
@@ -1434,6 +1783,16 @@
       document.getElementById("deletePassword").addEventListener("keypress", function(e) { 
         if (e.key === "Enter") deleteAllLogs(); 
       }); 
+
+      // Add event listeners for theme customization
+      document.getElementById('bgColor').addEventListener('input', updateColorPreviews);
+      document.getElementById('bgColor2').addEventListener('input', updateColorPreviews);
+      document.getElementById('textColor').addEventListener('input', updateColorPreviews);
+      document.getElementById('buttonColor').addEventListener('input', updateColorPreviews);
+      document.getElementById('headerColor').addEventListener('input', updateColorPreviews);
+      
+      // Initial preview update
+      updateColorPreviews();
 
       window.onclick = function(event) {
         const modal = document.getElementById('exportModal');
