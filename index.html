@@ -491,15 +491,171 @@
     .refresh-button {
       background-color: #3498db;
     }
+    
+    /* New styles for search options */
+    .search-options-panel {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    
+    .search-options-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .search-type-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .search-type-option {
+      display: flex;
+      align-items: center;
+    }
+    
+    .search-type-option input {
+      margin-right: 5px;
+    }
+    
+    .column-selector {
+      margin-top: 15px;
+    }
+    
+    .column-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      background-color: white;
+    }
+    
+    .column-checkbox {
+      display: flex;
+      align-items: center;
+    }
+    
+    .column-checkbox input {
+      margin-right: 8px;
+    }
+    
+    .mobile-view-toggle {
+      background-color: #9b59b6;
+    }
+    
+    /* Loading indicator */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Column visibility controls */
+    .column-visibility-controls {
+      background-color: #f0f8ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border: 1px solid #cce7ff;
+    }
+    
+    .column-visibility-header {
+      font-weight: bold;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .visibility-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .visibility-checkbox {
+      display: flex;
+      align-items: center;
+      background: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      border: 1px solid #ddd;
+    }
+    
+    .visibility-checkbox input {
+      margin-right: 5px;
+    }
+    
+    /* Search loading indicator */
+    .search-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    
+    /* Mobile-specific styles */
+    .mobile-view .container {
+      padding: 5px;
+    }
+    
+    .mobile-view h1 {
+      font-size: 1.3rem;
+    }
+    
+    .mobile-view .search-options-panel {
+      padding: 10px;
+    }
+    
+    .mobile-view .search-type-selector {
+      flex-direction: column;
+    }
+    
+    .mobile-view .column-checkboxes {
+      grid-template-columns: 1fr;
+    }
+    
+    .mobile-view .button-group {
+      flex-direction: column;
+    }
+    
+    .mobile-view .export-options {
+      flex-direction: column;
+    }
+    
+    .mobile-view .visibility-checkboxes {
+      flex-direction: column;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="top-buttons">
       <button onclick="location.reload()" class="refresh-button">🔄 Refresh</button>
+      <button onclick="toggleMobileView()" class="mobile-view-toggle" id="mobileViewToggle">📱 Mobile View</button>
     </div>
     <h1>📊 Excel Search Dashboard</h1>
-    <p class="author">by The Creator</p>
+    <p class="author">by Shakeel</p>
     
     <div id="userAuth">
       <h3>Please Enter Your Name to Continue</h3>
@@ -516,32 +672,90 @@
       
       <div class="export-options">
           <button onclick="handleExportClick('excel')" class="export-button">📊 Export to Excel</button>
+          <button onclick="handleExportClick('pdf')" class="export-button">📄 Export to PDF</button>
           <button onclick="handleExportClick('csv')" class="export-button">📝 Export to CSV</button>
-          <button onclick="handleExportClick('print')" class="export-button">🖨️ Print/PDF</button>
-          <button onclick="handleExportClick('json')" class="export-button">📋 Export to JSON</button>
+          <button onclick="handleExportClick('print')" class="export-button">🖨️ Print</button>
       </div>
       
       <div class="search-inputs">
         <div class="file-selector">
           <label for="fileSelect">📁 Select Files:</label>
           <select id="fileSelect">
-            <option value="" selected disabled>-- Select files to search --</option>
+            <option value="" selected disabled>-- Loading files from GitHub... --</option>
             <option value="all">All Files</option>
           </select>
         </div>
+        
+        <!-- Search Options Panel -->
+        <div class="search-options-panel">
+          <div class="search-options-header">
+            <span>🔍 Search Options</span>
+          </div>
+          
+          <div class="search-type-selector">
+            <div class="search-type-option">
+              <input type="radio" id="searchTypeContains" name="searchType" value="contains" checked>
+              <label for="searchTypeContains">Contains</label>
+            </div>
+            <div class="search-type-option">
+              <input type="radio" id="searchTypeExact" name="searchType" value="exact">
+              <label for="searchTypeExact">Exact Match</label>
+            </div>
+            <div class="search-type-option">
+              <input type="radio" id="searchTypeStartsWith" name="searchType" value="startsWith">
+              <label for="searchTypeStartsWith">Starts With</label>
+            </div>
+            <div class="search-type-option">
+              <input type="radio" id="searchTypeEndsWith" name="searchType" value="endsWith">
+              <label for="searchTypeEndsWith">Ends With</label>
+            </div>
+          </div>
+          
+          <div class="column-selector">
+            <label><strong>🔍 Search in Specific Columns:</strong></label>
+            <div class="column-checkboxes" id="columnCheckboxes">
+              <p>Select files first to see available columns</p>
+            </div>
+            <div class="button-group" style="margin-top: 10px;">
+              <button onclick="selectAllColumns()">Select All Columns</button>
+              <button onclick="deselectAllColumns()">Deselect All Columns</button>
+            </div>
+          </div>
+        </div>
+        
         <input type="text" id="searchInput" placeholder="Search keywords separated by commas..." />
       </div>
       
       <div class="button-group">
-        <button onclick="performSearch()" class="search-button">Search</button>
+        <button onclick="performSearch()" class="search-button" id="searchButton">Search</button>
         <button onclick="toggleAdminLogin()" class="admin-button">Admin Mode</button>
         <button onclick="logout()" class="logout-button">Logout</button>
+      </div>
+
+      <!-- Search Loading Indicator -->
+      <div id="searchLoading" class="search-loading hidden">
+        <div class="loading"></div>
       </div>
 
       <div id="results" class="hidden">
         <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
         <p>Total Matches: <span id="totalMatches">0</span></p>
         <p id="perTermMatches"></p>
+        
+        <!-- Column Visibility Controls -->
+        <div class="column-visibility-controls" id="columnVisibilityControls" style="display: none;">
+          <div class="column-visibility-header">
+            <span>👁️ Show/Hide Columns</span>
+            <div class="button-group" style="margin: 0;">
+              <button onclick="showAllColumns()" style="padding: 5px 10px; font-size: 12px;">Show All</button>
+              <button onclick="hideAllColumns()" style="padding: 5px 10px; font-size: 12px;">Hide All</button>
+            </div>
+          </div>
+          <div class="visibility-checkboxes" id="visibilityCheckboxes">
+            <!-- Column visibility checkboxes will be populated here -->
+          </div>
+        </div>
+        
         <h3>🔎 Search Results</h3>
         
         <div class="table-container">
@@ -701,6 +915,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <script>
     // Global variables
     let excelData = [];
@@ -722,6 +938,11 @@
     let startX = 0;
     let startWidth = 0;
     let currentExportType = null;
+    let availableColumns = [];
+    let isMobileView = false;
+    const GITHUB_REPO_URL = "https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/";
+    const GITHUB_RAW_URL = "https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/";
+    let columnVisibility = {}; // Track column visibility state
 
     // Theme customization functions
     function toggleThemePanel() {
@@ -871,110 +1092,855 @@
       document.getElementById('headerPreview').style.backgroundColor = document.getElementById('headerColor').value;
     }
     
-    // Helper function to adjust color brightness
-    function adjustColor(hex, percent) {
-      // Remove # if present
-      hex = hex.replace('#', '');
+    function adjustColor(color, amount) {
+      let usePound = false;
+      if (color[0] === "#") {
+        color = color.slice(1);
+        usePound = true;
+      }
       
-      // Convert to RGB
-      let r = parseInt(hex.substring(0, 2), 16);
-      let g = parseInt(hex.substring(2, 4), 16);
-      let b = parseInt(hex.substring(4, 6), 16);
+      let num = parseInt(color, 16);
+      let r = (num >> 16) + amount;
+      if (r > 255) r = 255;
+      else if (r < 0) r = 0;
       
-      // Adjust brightness
-      r = Math.max(0, Math.min(255, r + percent));
-      g = Math.max(0, Math.min(255, g + percent));
-      b = Math.max(0, Math.min(255, b + percent));
+      let b = ((num >> 8) & 0x00FF) + amount;
+      if (b > 255) b = 255;
+      else if (b < 0) b = 0;
       
-      // Convert back to hex
-      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+      let g = (num & 0x0000FF) + amount;
+      if (g > 255) g = 255;
+      else if (g < 0) g = 0;
+      
+      return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
     }
-
-    // Remove file extension from filename
-    function removeExtension(filename) {
-      return filename.replace(/\.[^/.]+$/, "");
-    }
-
-    // Load file nicknames from localStorage or initialize empty object
-    function loadFileNicknames() {
-      const savedNicknames = localStorage.getItem('fileNicknames');
-      if (savedNicknames) {
-        fileNicknames = JSON.parse(savedNicknames);
-      } else {
-        fileNicknames = {};
+    
+    // GitHub data loading functions
+    async function loadFilesFromGitHub() {
+      try {
+        document.getElementById('fileSelect').innerHTML = '<option value="" selected disabled>-- Loading files from GitHub... --</option>';
+        
+        const response = await fetch(GITHUB_REPO_URL);
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        const files = await response.json();
+        
+        // Filter for Excel files
+        const excelFiles = files.filter(file => 
+          file.name.toLowerCase().endsWith('.xlsx') || 
+          file.name.toLowerCase().endsWith('.xls')
+        );
+        
+        if (excelFiles.length === 0) {
+          throw new Error('No Excel files found in the repository');
+        }
+        
+        availableFiles = excelFiles;
+        
+        // Set default nicknames
+        availableFiles.forEach(file => {
+          const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace(/_/g, ' ');
+          fileNicknames[file.name] = simpleName;
+        });
+        
+        // Update file select dropdown
+        updateFileSelect();
+        
+        // Load data from the first file by default
+        if (availableFiles.length > 0) {
+          await loadExcelDataFromGitHub(availableFiles[0].name);
+        }
+        
+        return excelFiles;
+      } catch (error) {
+        console.error('Error loading files from GitHub:', error);
+        document.getElementById('fileSelect').innerHTML = '<option value="" selected disabled>-- Error loading files --</option>';
+        document.getElementById('excelUploadDate').textContent = 'Error loading data from GitHub';
+        return [];
       }
     }
-
-    // Save file nicknames to localStorage
-    function saveFileNicknames() {
-      // Collect all nickname inputs
-      const nicknameInputs = document.querySelectorAll('.nickname-input');
-      nicknameInputs.forEach(input => {
-        const filename = input.dataset.filename;
-        const nickname = input.value.trim();
-        if (nickname) {
-          fileNicknames[filename] = nickname;
-        } else {
-          // If nickname is empty, remove it from the object
-          delete fileNicknames[filename];
+    
+    async function loadExcelDataFromGitHub(filename) {
+      try {
+        document.getElementById('excelUploadDate').innerHTML = '<span class="loading"></span> Loading data...';
+        
+        const rawUrl = `${GITHUB_RAW_URL}${filename}`;
+        const response = await fetch(rawUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.status}`);
         }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Clear existing data
+        excelData = [];
+        
+        // Process each worksheet
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          if (jsonData.length > 0) {
+            // Extract headers (first row)
+            const headers = jsonData[0];
+            
+            // Process data rows (skip header row)
+            for (let i = 1; i < jsonData.length; i++) {
+              const rowData = {};
+              const row = jsonData[i];
+              
+              // Map each cell to its header
+              headers.forEach((header, index) => {
+                if (header && row[index] !== undefined) {
+                  rowData[header] = row[index];
+                }
+              });
+              
+              // Add file source information
+              if (Object.keys(rowData).length > 0) {
+                rowData.__sourceFile = filename;
+                rowData.__sheetName = sheetName;
+                excelData.push(rowData);
+              }
+            }
+          }
+        });
+        
+        document.getElementById('excelUploadDate').textContent = `Loaded ${excelData.length} records from ${filename} at ${new Date().toLocaleString()}`;
+        
+        // Update column checkboxes
+        updateColumnCheckboxes();
+        
+        return excelData;
+      } catch (error) {
+        console.error('Error loading Excel data:', error);
+        document.getElementById('excelUploadDate').textContent = `Error loading data from ${filename}`;
+        return [];
+      }
+    }
+    
+    async function loadAllExcelDataFromGitHub() {
+      try {
+        document.getElementById('excelUploadDate').innerHTML = '<span class="loading"></span> Loading all files...';
+        
+        // Clear existing data
+        excelData = [];
+        
+        // Load data from each file
+        for (const file of availableFiles) {
+          const rawUrl = `${GITHUB_RAW_URL}${file.name}`;
+          const response = await fetch(rawUrl);
+          
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            
+            // Process each worksheet
+            workbook.SheetNames.forEach(sheetName => {
+              const worksheet = workbook.Sheets[sheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+              
+              if (jsonData.length > 0) {
+                // Extract headers (first row)
+                const headers = jsonData[0];
+                
+                // Process data rows (skip header row)
+                for (let i = 1; i < jsonData.length; i++) {
+                  const rowData = {};
+                  const row = jsonData[i];
+                  
+                  // Map each cell to its header
+                  headers.forEach((header, index) => {
+                    if (header && row[index] !== undefined) {
+                      rowData[header] = row[index];
+                    }
+                  });
+                  
+                  // Add file source information
+                  if (Object.keys(rowData).length > 0) {
+                    rowData.__sourceFile = file.name;
+                    rowData.__sheetName = sheetName;
+                    excelData.push(rowData);
+                  }
+                }
+              }
+            });
+          }
+        }
+        
+        document.getElementById('excelUploadDate').textContent = `Loaded ${excelData.length} records from ${availableFiles.length} files at ${new Date().toLocaleString()}`;
+        
+        // Update column checkboxes
+        updateColumnCheckboxes();
+        
+        return excelData;
+      } catch (error) {
+        console.error('Error loading all Excel data:', error);
+        document.getElementById('excelUploadDate').textContent = 'Error loading data from GitHub';
+        return [];
+      }
+    }
+    
+    // User authentication functions
+    function setUserName() {
+      const nameInput = document.getElementById('userName');
+      const nameError = document.getElementById('nameError');
+      const name = nameInput.value.trim();
+      
+      // Validate name (letters only, no numbers or special characters)
+      if (!name || !/^[a-zA-Z\s]+$/.test(name)) {
+        nameError.classList.remove('hidden');
+        return;
+      }
+      
+      nameError.classList.add('hidden');
+      currentUserName = name;
+      currentUserLoginTime = new Date();
+      
+      // Create user session
+      userSessions.push({
+        userName: currentUserName,
+        loginTime: currentUserLoginTime,
+        logoutTime: null,
+        searchCount: 0,
+        lastSearch: ""
       });
       
       // Save to localStorage
-      localStorage.setItem('fileNicknames', JSON.stringify(fileNicknames));
-      alert("File nicknames saved successfully!");
+      saveUserData();
       
-      // Update the file dropdown
-      updateFileDropdown();
-    }
-
-    // Reset file nicknames to default (empty)
-    function resetFileNicknames() {
-      if (confirm("Are you sure you want to reset all file nicknames to their default names?")) {
-        fileNicknames = {};
-        localStorage.removeItem('fileNicknames');
-        renderFileNicknameManager();
-        updateFileDropdown();
-        alert("File nicknames have been reset to default.");
-      }
-    }
-
-    // Update the file selection dropdown with nicknames
-    function updateFileDropdown() {
-      const fileSelect = document.getElementById("fileSelect");
+      // Update UI
+      document.getElementById('userAuth').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
       
-      // Clear existing options except the first two
-      while (fileSelect.options.length > 2) {
-        fileSelect.remove(2);
+      // Log user activity
+      logUserActivity(`${currentUserName} logged in`);
+    }
+    
+    function logout() {
+      // Update user session with logout time
+      const currentSession = userSessions.find(session => 
+        session.userName === currentUserName && session.logoutTime === null);
+      
+      if (currentSession) {
+        currentSession.logoutTime = new Date();
+        currentSession.duration = Math.round((currentSession.logoutTime - currentSession.loginTime) / 1000);
       }
       
-      // Add files to dropdown with nicknames if available
+      // Save to localStorage
+      saveUserData();
+      
+      // Log user activity
+      logUserActivity(`${currentUserName} logged out`);
+      
+      // Reset UI
+      currentUserName = "";
+      currentUserLoginTime = null;
+      userSearchCount = 0;
+      userLastSearch = "";
+      
+      document.getElementById('userAuth').classList.remove('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('results').classList.add('hidden');
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('adminLogin').classList.add('hidden');
+      
+      // Clear search input
+      document.getElementById('searchInput').value = "";
+    }
+    
+    function toggleAdminLogin() {
+      const adminLogin = document.getElementById('adminLogin');
+      const mainContent = document.getElementById('mainContent');
+      
+      if (adminLogin.classList.contains('hidden')) {
+        adminLogin.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+      } else {
+        adminLogin.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+      }
+    }
+    
+    function checkAdminLogin() {
+      const username = document.getElementById('adminUser').value;
+      const password = document.getElementById('adminPass').value;
+      
+      // Simple admin authentication
+      if (username === 'admin' && password === 'admin123') {
+        document.getElementById('adminLogin').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        document.getElementById('mainContent').classList.add('hidden');
+        
+        // Load admin data
+        loadAdminData();
+        
+        // Log admin activity
+        logUserActivity("Admin logged in");
+      } else {
+        alert("Invalid admin credentials!");
+      }
+    }
+    
+    function hideAdminPanel() {
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      
+      // Clear admin login fields
+      document.getElementById('adminUser').value = "";
+      document.getElementById('adminPass').value = "";
+      
+      // Log admin activity
+      logUserActivity("Admin logged out");
+    }
+    
+    // Data loading and management functions
+    function loadUserData() {
+      const savedData = localStorage.getItem('excelSearchData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        fileNicknames = data.fileNicknames || {};
+        searchLogs = data.searchLogs || [];
+        userSessions = data.userSessions || [];
+      }
+    }
+    
+    function saveUserData() {
+      const data = {
+        fileNicknames,
+        searchLogs,
+        userSessions,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      localStorage.setItem('excelSearchData', JSON.stringify(data));
+    }
+    
+    function updateFileSelect() {
+      const fileSelect = document.getElementById('fileSelect');
+      
+      // Clear existing options except the first one
+      fileSelect.innerHTML = '<option value="" selected disabled>-- Select files to search --</option><option value="all">All Files</option>';
+      
+      // Add file options
       availableFiles.forEach(file => {
-        const option = document.createElement("option");
+        const option = document.createElement('option');
         option.value = file.name;
-        
-        // Use nickname if available, otherwise use filename without extension
-        const displayName = fileNicknames[file.name] || removeExtension(file.name);
-        option.textContent = displayName;
-        
+        option.textContent = fileNicknames[file.name] || file.name;
         fileSelect.appendChild(option);
       });
+      
+      // Add event listener for file selection change
+      fileSelect.addEventListener('change', async function() {
+        const selectedValue = this.value;
+        
+        if (selectedValue === 'all') {
+          await loadAllExcelDataFromGitHub();
+        } else if (selectedValue) {
+          await loadExcelDataFromGitHub(selectedValue);
+        }
+        
+        // Update column checkboxes
+        updateColumnCheckboxes();
+      });
     }
-
-    // Show delete confirmation dialog
-    function showDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.remove('hidden');
-      document.getElementById('deletePassword').focus();
+    
+    function updateColumnCheckboxes() {
+      const columnCheckboxes = document.getElementById('columnCheckboxes');
+      columnCheckboxes.innerHTML = '';
+      
+      if (excelData.length === 0) {
+        columnCheckboxes.innerHTML = '<p>No data available. Please select files first.</p>';
+        return;
+      }
+      
+      // Get all column names from the data (excluding internal columns)
+      availableColumns = [...new Set(excelData.flatMap(row => Object.keys(row)))].filter(col => 
+        !col.startsWith('__') // Filter out internal columns like __sourceFile, __sheetName
+      );
+      
+      if (availableColumns.length === 0) {
+        columnCheckboxes.innerHTML = '<p>No columns found in the data</p>';
+        return;
+      }
+      
+      // Create checkboxes for each column
+      availableColumns.forEach(column => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'column-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `col-${column}`;
+        checkbox.value = column;
+        checkbox.checked = true; // Default to checked
+        
+        const label = document.createElement('label');
+        label.htmlFor = `col-${column}`;
+        label.textContent = column;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        columnCheckboxes.appendChild(checkboxDiv);
+      });
     }
-
-    // Hide delete confirmation dialog
-    function hideDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.add('hidden');
-      document.getElementById('deletePassword').value = '';
+    
+    function selectAllColumns() {
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+      });
     }
-
-    // Update the selected logs count display
-    function updateSelectedLogsCount() {
+    
+    function deselectAllColumns() {
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    }
+    
+    function getSelectedColumns() {
+      const selectedColumns = [];
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]:checked').forEach(checkbox => {
+        selectedColumns.push(checkbox.value);
+      });
+      return selectedColumns;
+    }
+    
+    // Search functionality
+    async function performSearch() {
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchType = document.querySelector('input[name="searchType"]:checked').value;
+      const selectedColumns = getSelectedColumns();
+      
+      if (!searchText) {
+        alert("Please enter search terms");
+        return;
+      }
+      
+      if (excelData.length === 0) {
+        alert("No data loaded. Please wait for data to load or select different files.");
+        return;
+      }
+      
+      if (selectedColumns.length === 0) {
+        alert("Please select at least one column to search in");
+        return;
+      }
+      
+      // Show loading indicator
+      document.getElementById('searchLoading').classList.remove('hidden');
+      document.getElementById('searchButton').disabled = true;
+      
+      // Split search terms by commas and trim each term
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      
+      if (searchTerms.length === 0) {
+        alert("Please enter valid search terms");
+        document.getElementById('searchLoading').classList.add('hidden');
+        document.getElementById('searchButton').disabled = false;
+        return;
+      }
+      
+      // Use setTimeout to allow UI to update with loading indicator
+      setTimeout(async () => {
+        try {
+          // Apply search based on search type and selected columns
+          const results = [];
+          const termMatches = {};
+          
+          searchTerms.forEach((term, index) => {
+            termMatches[term] = 0;
+            
+            excelData.forEach(item => {
+              let matchFound = false;
+              
+              // Check each selected column for a match
+              selectedColumns.forEach(column => {
+                if (item[column] !== undefined) {
+                  const cellValue = String(item[column]).toLowerCase();
+                  const searchTerm = term.toLowerCase();
+                  
+                  let matches = false;
+                  
+                  switch(searchType) {
+                    case "contains":
+                      matches = cellValue.includes(searchTerm);
+                      break;
+                    case "exact":
+                      matches = cellValue === searchTerm;
+                      break;
+                    case "startsWith":
+                      matches = cellValue.startsWith(searchTerm);
+                      break;
+                    case "endsWith":
+                      matches = cellValue.endsWith(searchTerm);
+                      break;
+                  }
+                  
+                  if (matches) {
+                    matchFound = true;
+                    termMatches[term]++;
+                  }
+                }
+              });
+              
+              if (matchFound) {
+                // Check if this item is already in results
+                const existingIndex = results.findIndex(r => 
+                  JSON.stringify(r) === JSON.stringify(item)
+                );
+                
+                if (existingIndex === -1) {
+                  // Add to results with highlight info
+                  results.push({
+                    ...item,
+                    highlights: [{ term, color: highlightColors[index % highlightColors.length] }]
+                  });
+                } else {
+                  // Add highlight info to existing result
+                  results[existingIndex].highlights.push({
+                    term,
+                    color: highlightColors[index % highlightColors.length]
+                  });
+                }
+              }
+            });
+          });
+          
+          // Remove duplicates (in case multiple terms match the same row)
+          currentResults = results;
+          
+          // Update search count for user
+          userSearchCount++;
+          userLastSearch = searchText;
+          
+          // Update current user session
+          const currentSession = userSessions.find(session => 
+            session.userName === currentUserName && session.logoutTime === null);
+          
+          if (currentSession) {
+            currentSession.searchCount = userSearchCount;
+            currentSession.lastSearch = userLastSearch;
+          }
+          
+          // Log the search activity
+          logUserActivity(`${currentUserName} searched for: ${searchText} (${results.length} results)`);
+          
+          // Save user data
+          saveUserData();
+          
+          // Display results
+          displaySearchResults(results, searchTerms, termMatches);
+        } catch (error) {
+          console.error('Error during search:', error);
+          alert('An error occurred during search. Please try again.');
+        } finally {
+          // Hide loading indicator
+          document.getElementById('searchLoading').classList.add('hidden');
+          document.getElementById('searchButton').disabled = false;
+        }
+      }, 100);
+    }
+    
+    function displaySearchResults(results, searchTerms, termMatches) {
+      const resultsDiv = document.getElementById('results');
+      const resultText = document.getElementById('resultText');
+      const totalMatches = document.getElementById('totalMatches');
+      const perTermMatches = document.getElementById('perTermMatches');
+      
+      // Show results section
+      resultsDiv.classList.remove('hidden');
+      
+      // Update match counts
+      totalMatches.textContent = results.length;
+      
+      let perTermText = "Matches per term: ";
+      searchTerms.forEach((term, index) => {
+        perTermText += `<span class="${highlightColors[index % highlightColors.length]}">${term}</span>: ${termMatches[term]}`;
+        if (index < searchTerms.length - 1) {
+          perTermText += ", ";
+        }
+      });
+      perTermMatches.innerHTML = perTermText;
+      
+      // Create table for results
+      if (results.length === 0) {
+        resultText.innerHTML = "<p>No results found.</p>";
+        document.getElementById('columnVisibilityControls').style.display = 'none';
+        return;
+      }
+      
+      // Get all column names from the first result (excluding internal columns and highlights)
+      const columns = Object.keys(results[0]).filter(col => 
+        !col.startsWith('__') && col !== 'highlights'
+      );
+      
+      // Initialize column visibility (all visible by default)
+      columns.forEach(col => {
+        if (columnVisibility[col] === undefined) {
+          columnVisibility[col] = true;
+        }
+      });
+      
+      // Update column visibility controls
+      updateColumnVisibilityControls(columns);
+      
+      let tableHTML = `<table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Source File</th>
+            <th>Sheet Name</th>`;
+      
+      columns.forEach(col => {
+        if (columnVisibility[col]) {
+          tableHTML += `<th onclick="sortTable('${col}')">${col}</th>`;
+        }
+      });
+      
+      tableHTML += `</tr>
+        </thead>
+        <tbody>`;
+      
+      results.forEach((result, index) => {
+        tableHTML += `<tr class="result-row">`;
+        tableHTML += `<td>${fileNicknames[result.__sourceFile] || result.__sourceFile}</td>`;
+        tableHTML += `<td>${result.__sheetName || 'N/A'}</td>`;
+        
+        columns.forEach(col => {
+          if (columnVisibility[col]) {
+            let cellValue = String(result[col] || '');
+            
+            // Apply highlights if this cell contains any search terms
+            if (result.highlights) {
+              result.highlights.forEach(highlight => {
+                const regex = new RegExp(`(${escapeRegex(highlight.term)})`, 'gi');
+                cellValue = cellValue.replace(regex, `<span class="${highlight.color}">$1</span>`);
+              });
+            }
+            
+            tableHTML += `<td>${cellValue}</td>`;
+          }
+        });
+        
+        tableHTML += `</tr>`;
+      });
+      
+      tableHTML += `</tbody></table>`;
+      
+      resultText.innerHTML = tableHTML;
+    }
+    
+    function updateColumnVisibilityControls(columns) {
+      const visibilityControls = document.getElementById('columnVisibilityControls');
+      const visibilityCheckboxes = document.getElementById('visibilityCheckboxes');
+      
+      visibilityControls.style.display = 'block';
+      visibilityCheckboxes.innerHTML = '';
+      
+      columns.forEach(col => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'visibility-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `vis-${col}`;
+        checkbox.checked = columnVisibility[col];
+        checkbox.onchange = () => toggleColumnVisibility(col, checkbox.checked);
+        
+        const label = document.createElement('label');
+        label.htmlFor = `vis-${col}`;
+        label.textContent = col;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        visibilityCheckboxes.appendChild(checkboxDiv);
+      });
+    }
+    
+    function toggleColumnVisibility(column, isVisible) {
+      columnVisibility[column] = isVisible;
+      
+      // Refresh the results table
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches);
+    }
+    
+    function showAllColumns() {
+      Object.keys(columnVisibility).forEach(col => {
+        columnVisibility[col] = true;
+      });
+      
+      // Update checkboxes
+      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      
+      // Refresh the results table
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches);
+    }
+    
+    function hideAllColumns() {
+      Object.keys(columnVisibility).forEach(col => {
+        columnVisibility[col] = false;
+      });
+      
+      // Update checkboxes
+      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      
+      // Refresh the results table
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches);
+    }
+    
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    function sortTable(column) {
+      if (sortColumn === column) {
+        // Toggle direction if same column
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // New column, default to ascending
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+      
+      // Sort the current results
+      currentResults.sort((a, b) => {
+        let aValue = a[column];
+        let bValue = b[column];
+        
+        // Handle different data types
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+      
+      // Update the table headers to show sort direction
+      document.querySelectorAll('#resultsTable th').forEach(th => {
+        th.classList.remove('asc', 'desc');
+        if (th.textContent === column || th.getAttribute('onclick')?.includes(column)) {
+          th.classList.add(sortDirection);
+        }
+      });
+      
+      // Redisplay the results
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches);
+    }
+    
+    // Admin functions
+    function loadAdminData() {
+      // Update admin logs table
+      updateAdminLogsTable();
+      
+      // Update file nickname manager
+      updateFileNicknameManager();
+    }
+    
+    function updateAdminLogsTable() {
+      const logTable = document.getElementById('logTable');
+      logTable.innerHTML = '';
+      
+      userSessions.forEach((session, index) => {
+        const row = document.createElement('tr');
+        row.className = 'log-row';
+        
+        // Calculate duration if logout time exists
+        let duration = 'Active';
+        if (session.logoutTime) {
+          const diffMs = new Date(session.logoutTime) - new Date(session.loginTime);
+          const diffMins = Math.round(diffMs / 60000);
+          duration = `${diffMins} min`;
+        }
+        
+        row.innerHTML = `
+          <td><input type="checkbox" class="log-checkbox" onchange="toggleLogSelection(${index}, this.checked)"></td>
+          <td>${session.userName}</td>
+          <td>${new Date(session.loginTime).toLocaleString()}</td>
+          <td>${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}</td>
+          <td>${duration}</td>
+          <td>${session.searchCount || 0}</td>
+          <td>${session.lastSearch || 'None'}</td>
+        `;
+        
+        logTable.appendChild(row);
+      });
+    }
+    
+    function toggleLogSelection(index, checked) {
+      if (checked) {
+        selectedLogs.add(index);
+      } else {
+        selectedLogs.delete(index);
+      }
+      
+      updateSelectedLogsDisplay();
+    }
+    
+    function toggleSelectAllLogs(checked) {
+      const checkboxes = document.querySelectorAll('.log-checkbox');
+      selectedLogs.clear();
+      
+      checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = checked;
+        if (checked) {
+          selectedLogs.add(index);
+        }
+      });
+      
+      updateSelectedLogsDisplay();
+    }
+    
+    function updateSelectedLogsDisplay() {
       const selectedCount = document.getElementById('selectedCount');
       const deleteSelectedContainer = document.getElementById('deleteSelectedContainer');
       
@@ -986,804 +1952,473 @@
         deleteSelectedContainer.classList.add('hidden');
       }
     }
-
-    // Toggle selection of all logs
-    function toggleSelectAllLogs(selectAll) {
-      const checkboxes = document.querySelectorAll('.log-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll;
-        const index = parseInt(checkbox.dataset.index);
-        if (selectAll) {
-          selectedLogs.add(index);
-        } else {
-          selectedLogs.delete(index);
-        }
-      });
-      
-      // Update row styling
-      document.querySelectorAll('.log-row').forEach((row, idx) => {
-        if (selectAll) {
-          row.classList.add('selected');
-        } else {
-          row.classList.remove('selected');
-        }
-      });
-      
-      updateSelectedLogsCount();
-    }
-
-    // Toggle selection of individual log
-    function toggleLogSelection(checkbox, index) {
-      if (checkbox.checked) {
-        selectedLogs.add(index);
-        checkbox.parentElement.parentElement.classList.add('selected');
-      } else {
-        selectedLogs.delete(index);
-        checkbox.parentElement.parentElement.classList.remove('selected');
-      }
-      
-      // Update select all checkbox
-      const selectAll = document.getElementById('selectAllLogs');
-      selectAll.checked = selectedLogs.size === userSessions.length;
-      
-      updateSelectedLogsCount();
-    }
-
-    // Delete selected logs
+    
     function deleteSelectedLogs() {
       if (selectedLogs.size === 0) {
-        alert("Please select at least one log to delete.");
+        alert("No logs selected for deletion");
         return;
       }
       
-      if (!confirm(`Are you sure you want to delete ${selectedLogs.size} log(s)? This action cannot be undone.`)) {
+      if (!confirm(`Are you sure you want to delete ${selectedLogs.size} selected log(s)? This action cannot be undone.`)) {
         return;
       }
       
-      // Delete selected logs (in reverse order to avoid index issues)
-      const sortedIndexes = Array.from(selectedLogs).sort((a, b) => b - a);
-      sortedIndexes.forEach(index => {
+      // Convert Set to Array and sort in descending order to avoid index issues
+      const indicesToDelete = Array.from(selectedLogs).sort((a, b) => b - a);
+      
+      // Delete logs from the array
+      indicesToDelete.forEach(index => {
         userSessions.splice(index, 1);
       });
       
       // Clear selection
       selectedLogs.clear();
-      document.getElementById('selectAllLogs').checked = false;
       
-      // Update UI
-      loadLogs();
-      alert(`${sortedIndexes.length} log(s) have been deleted successfully.`);
+      // Save data and update UI
+      saveUserData();
+      updateAdminLogsTable();
+      updateSelectedLogsDisplay();
+      
+      alert(`${indicesToDelete.length} log(s) deleted successfully`);
     }
-
-    // Delete all logs after password confirmation
+    
+    function showDeleteConfirmation() {
+      document.getElementById('deleteConfirmation').classList.remove('hidden');
+    }
+    
+    function hideDeleteConfirmation() {
+      document.getElementById('deleteConfirmation').classList.add('hidden');
+      document.getElementById('deletePassword').value = '';
+    }
+    
     function deleteAllLogs() {
-      const password = document.getElementById('deletePassword').value.trim();
+      const password = document.getElementById('deletePassword').value;
       
-      if (password !== "9332") {
-        alert("Incorrect admin password. Deletion cancelled.");
-        hideDeleteConfirmation();
+      if (password !== 'admin123') {
+        alert("Incorrect admin password");
         return;
       }
       
-      // Clear all logs
+      if (!confirm("Are you sure you want to delete ALL user logs? This action cannot be undone.")) {
+        return;
+      }
+      
+      // Clear all user sessions
       userSessions = [];
-      searchLogs = [];
-      selectedLogs.clear();
       
-      // Update UI
-      loadLogs();
+      // Save data and update UI
+      saveUserData();
+      updateAdminLogsTable();
       hideDeleteConfirmation();
-      alert("All logs have been deleted successfully.");
+      
+      alert("All user logs have been deleted");
     }
-
-    // Export user logs as text file
+    
     function exportUserLogs() {
-      if (userSessions.length === 0) {
-        alert("No user logs available to export.");
-        return;
-      }
+      let logText = "User Activity Logs\n";
+      logText += "Generated: " + new Date().toLocaleString() + "\n\n";
       
-      let textContent = "USER LOGIN HISTORY REPORT\n";
-      textContent += "Generated on: " + new Date().toLocaleString() + "\n";
-      textContent += "Total records: " + userSessions.length + "\n\n";
-      
-      textContent += "USER SESSION LOGS:\n";
-      textContent += "===================\n\n";
-      
-      userSessions.forEach((session, index) => {
-        textContent += `RECORD ${index + 1}:\n`;
-        textContent += `User: ${session.user}\n`;
-        textContent += `Login Time: ${session.loginTime ? session.loginTime.toLocaleString() : "N/A"}\n`;
-        textContent += `Logout Time: ${session.logoutTime ? session.logoutTime.toLocaleString() : "Still logged in"}\n`;
-        textContent += `Duration: ${session.duration ? formatDuration(session.duration) : "N/A"}\n`;
-        textContent += `Search Count: ${session.searchCount || 0}\n`;
-        textContent += `Last Search: ${session.lastSearch || "No searches"}\n`;
-        textContent += "----------------------------------------\n\n";
+      userSessions.forEach(session => {
+        logText += `User: ${session.userName}\n`;
+        logText += `Login Time: ${new Date(session.loginTime).toLocaleString()}\n`;
+        logText += `Logout Time: ${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}\n`;
+        logText += `Duration: ${session.logoutTime ? Math.round((new Date(session.logoutTime) - new Date(session.loginTime)) / 60000) + ' min' : 'Active'}\n`;
+        logText += `Search Count: ${session.searchCount || 0}\n`;
+        logText += `Last Search: ${session.lastSearch || 'None'}\n`;
+        logText += "----------------------------------------\n";
       });
       
-      // Create download link
-      const blob = new Blob([textContent], { type: 'text/plain' });
+      // Create and download text file
+      const blob = new Blob([logText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'user_logs_report.txt';
-      document.body.appendChild(a);
+      a.download = 'user_logs.txt';
       a.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-    }
-
-    function validateName(name) {
-      // Only allow letters and spaces, no numbers or special characters
-      return /^[A-Za-z\s]+$/.test(name);
-    }
-
-    function setUserName() {
-      const userName = document.getElementById("userName").value.trim();
-      const nameError = document.getElementById("nameError");
-      
-      if (!userName) {
-        nameError.textContent = "Please enter your name";
-        nameError.classList.remove("hidden");
-        return;
-      }
-      
-      if (!validateName(userName)) {
-        nameError.textContent = "Please enter a valid name (letters only, no numbers or special characters)";
-        nameError.classList.remove("hidden");
-        return;
-      }
-      
-      nameError.classList.add("hidden");
-      currentUserName = userName;
-      currentUserLoginTime = new Date();
-      userSearchCount = 0;
-      userLastSearch = "";
-      
-      document.getElementById("userAuth").classList.add("hidden");
-      document.getElementById("mainContent").classList.remove("hidden");
-      
-      // Store user session
-      userSessions.push({
-        user: userName,
-        loginTime: currentUserLoginTime,
-        logoutTime: null,
-        searchCount: 0,
-        lastSearch: ""
-      });
-      
-      // Focus on search input for immediate use
-      document.getElementById("searchInput").focus();
+      URL.revokeObjectURL(url);
     }
     
-    function logout() {
-      if (currentUserName && currentUserLoginTime) {
-        const logoutTime = new Date();
-        const duration = Math.round((logoutTime - currentUserLoginTime) / 1000); // in seconds
+    function updateFileNicknameManager() {
+      const manager = document.getElementById('fileNicknameManager');
+      manager.innerHTML = '';
+      
+      availableFiles.forEach(file => {
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'file-nickname';
         
-        // Update the user session with logout time
-        const currentSession = userSessions.find(session => 
-          session.user === currentUserName && session.logoutTime === null
-        );
+        fileDiv.innerHTML = `
+          <label for="nickname-${file.name}">${file.name}:</label>
+          <input type="text" id="nickname-${file.name}" value="${fileNicknames[file.name] || file.name}" placeholder="Enter nickname for ${file.name}">
+        `;
         
-        if (currentSession) {
-          currentSession.logoutTime = logoutTime;
-          currentSession.duration = duration;
-          currentSession.searchCount = userSearchCount;
-          currentSession.lastSearch = userLastSearch;
+        manager.appendChild(fileDiv);
+      });
+    }
+    
+    function saveFileNicknames() {
+      availableFiles.forEach(file => {
+        const nicknameInput = document.getElementById(`nickname-${file.name}`);
+        if (nicknameInput) {
+          fileNicknames[file.name] = nicknameInput.value.trim() || file.name;
         }
+      });
+      
+      // Save data and update UI
+      saveUserData();
+      updateFileSelect();
+      
+      alert("File nicknames saved successfully!");
+    }
+    
+    function resetFileNicknames() {
+      availableFiles.forEach(file => {
+        const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace(/_/g, ' ');
+        fileNicknames[file.name] = simpleName;
+      });
+      
+      // Save data and update UI
+      saveUserData();
+      updateFileSelect();
+      updateFileNicknameManager();
+      
+      alert("File nicknames reset to default!");
+    }
+    
+    // Utility functions
+    function logUserActivity(activity) {
+      searchLogs.push({
+        user: currentUserName || 'Unknown',
+        activity: activity,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Keep only the last 1000 logs to prevent storage issues
+      if (searchLogs.length > 1000) {
+        searchLogs = searchLogs.slice(-1000);
       }
       
-      currentUserName = "";
-      currentUserLoginTime = null;
-      userSearchCount = 0;
-      userLastSearch = "";
-      
-      document.getElementById("userAuth").classList.remove("hidden");
-      document.getElementById("mainContent").classList.add("hidden");
-      document.getElementById("adminLogin").classList.add("hidden");
-      document.getElementById("adminPanel").classList.add("hidden");
-      document.getElementById("userName").value = "";
-      document.getElementById("userName").focus();
+      saveUserData();
     }
-
-    function toggleAdminLogin() {
-      const adminLogin = document.getElementById("adminLogin");
-      const mainContent = document.getElementById("mainContent");
-      
-      if (adminLogin.classList.contains("hidden")) {
-        // Show admin login
-        adminLogin.classList.remove("hidden");
-        // Hide main content when admin login is shown
-        if (!mainContent.classList.contains("hidden")) {
-          mainContent.classList.add("hidden");
-        }
-        
-        // Clear previous inputs
-        document.getElementById("adminUser").value = "";
-        document.getElementById("adminPass").value = "";
-        
-        // Focus on username field
-        document.getElementById("adminUser").focus();
+    
+    function checkMobileDevice() {
+      isMobileView = window.innerWidth <= 768;
+      updateMobileView();
+    }
+    
+    function toggleMobileView() {
+      isMobileView = !isMobileView;
+      updateMobileView();
+      document.getElementById('mobileViewToggle').textContent = isMobileView ? "🖥️ Desktop View" : "📱 Mobile View";
+    }
+    
+    function updateMobileView() {
+      if (isMobileView) {
+        document.body.classList.add('mobile-view');
       } else {
-        // Hide admin login, show main content
-        adminLogin.classList.add("hidden");
-        if (currentUserName) {
-          mainContent.classList.remove("hidden");
-        }
+        document.body.classList.remove('mobile-view');
       }
     }
     
-    function hideAdminPanel() {
-      document.getElementById("adminPanel").classList.add("hidden");
-      document.getElementById("mainContent").classList.remove("hidden");
-      hideDeleteConfirmation();
-    }
-
-    function checkAdminLogin() { 
-      const user = document.getElementById("adminUser").value.trim().toLowerCase();
-      const pass = document.getElementById("adminPass").value.trim(); 
+    function updateSearchHint() {
+      const searchType = document.querySelector('input[name="searchType"]:checked').value;
+      let hint = "";
       
-      // Case-insensitive username check for "shakeel"
-      if (user === "shakeel" && pass === "9332") { 
-        document.getElementById("adminLogin").classList.add("hidden"); 
-        document.getElementById("adminPanel").classList.remove("hidden"); 
-        loadLogs(); 
-        renderFileNicknameManager();
-      } else { 
-        alert("Invalid credentials!"); 
-      } 
-    }
-
-    async function loadAvailableFiles() {
-      try {
-        // Use GitHub API to list files in the repository
-        const response = await fetch("https://api.github.com/repos/shakeelsnu/FleetData-by-Shakeel/contents/");
-        const files = await response.json();
-        
-        // Filter for Excel files
-        availableFiles = files.filter(f => f.name.endsWith(".xlsx"));
-        
-        // Update the file selection dropdown
-        updateFileDropdown();
-        
-        return availableFiles;
-      } catch (error) {
-        console.error("Error loading available files:", error);
-        document.getElementById("excelUploadDate").innerText = "❌ Failed to load file list";
-        return [];
-      }
-    }
-
-    async function loadSelectedExcelFiles() {
-      const fileSelect = document.getElementById("fileSelect");
-      const selectedValue = fileSelect.value;
-      
-      if (!selectedValue) {
-        return;
+      switch(searchType) {
+        case "contains":
+          hint = "Search for text that contains your keywords";
+          break;
+        case "exact":
+          hint = "Search for exact matches of your keywords";
+          break;
+        case "startsWith":
+          hint = "Search for text that starts with your keywords";
+          break;
+        case "endsWith":
+          hint = "Search for text that ends with your keywords";
+          break;
       }
       
-      // If "All Files" is selected
-      const loadAll = selectedValue === "all";
-      
-      const filesToLoad = loadAll ? availableFiles : availableFiles.filter(f => f.name === selectedValue);
-      
-      excelData = [];
-      let loadedNames = [];
-
-      for (const file of filesToLoad) {
-        try {
-          // Get the raw file content from the repository
-          const rawUrl = `https://raw.githubusercontent.com/shakeelsnu/FleetData-by-Shakeel/main/${file.name}`;
-          const res = await fetch(rawUrl);
-          const arrayBuffer = await res.arrayBuffer();
-          const workbook = XLSX.read(arrayBuffer, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet);
-          
-          // Add filename to each row for tracking
-          const rowsWithSource = rows.map(row => ({ ...row, __sourceFile: file.name }));
-          excelData = excelData.concat(rowsWithSource);
-          
-          // Use nickname if available, otherwise use filename without extension
-          const displayName = fileNicknames[file.name] || removeExtension(file.name);
-          loadedNames.push(displayName);
-        } catch (err) { 
-          console.error("Failed loading:", file.name, err); 
-        }
-      }
-
-      document.getElementById("excelUploadDate").innerText = loadedNames.length > 0 ? 
-        loadedNames.join(", ") + " loaded at " + new Date().toLocaleString() : 
-        "❌ No Excel files found or selected";
-    }
-
-    async function getClientIP() {
-      try { 
-        const response = await fetch("https://api.ipify.org?format=json"); 
-        const data = await response.json(); 
-        return data.ip; 
-      } catch (e) { 
-        return "IP not available"; 
-      }
+      // Update placeholder text based on search type
+      document.getElementById('searchInput').placeholder = hint;
     }
     
-    function getDeviceName() { 
-      return navigator.userAgent || "Device name not available"; 
-    }
-
-    async function performSearch() {
-      // Check if user is logged in
-      if (!currentUserName) {
-        alert("Please enter your name to search.");
-        return;
-      }
-
-      const fileSelect = document.getElementById("fileSelect");
-      if (!fileSelect.value) {
-          alert("Please select a file to search.");
-          return;
-      }
-      
-      // First load the selected files
-      await loadSelectedExcelFiles();
-      
-      const input = document.getElementById("searchInput").value.trim();
-      const resultText = document.getElementById("resultText");
-      const resultsContainer = document.getElementById("results");
-      
-      if (!input) { 
-        resultText.innerHTML = "<p>Please type something to search.</p>"; 
-        resultsContainer.classList.remove("hidden"); 
-        document.getElementById("totalMatches").innerText = "0"; 
-        document.getElementById("perTermMatches").innerText = "";
-        return; 
-      }
-
-      const terms = input.split(",").map(term => term.trim().toLowerCase());
-      
-      if (excelData.length === 0) { 
-        resultText.innerHTML = "<p>No data loaded from GitHub. Please select a file and try again.</p>"; 
-        resultsContainer.classList.remove("hidden");
-        return; 
-      }
-
-      currentResults = [];
-      let totalMatches = 0;
-      const matchesPerTerm = new Map();
-      let lineNo = 1;
-
-      excelData.forEach(row => {
-        let rowMatched = false;
-        let formattedRow = { lineNo: lineNo };
-        let rowData = {};
-
-        // Add line number to row data
-        rowData['Line No'] = lineNo;
-        
-        // Use nickname if available, otherwise use filename without extension
-        const sourceFileName = row.__sourceFile || 'Unknown';
-        const displaySource = fileNicknames[sourceFileName] || removeExtension(sourceFileName);
-        rowData['Source File'] = displaySource;
-        
-        Object.keys(row).forEach(key => {
-          // Skip the internal source file property
-          if (key === '__sourceFile') return;
-          
-          let cell = String(row[key] || "");
-          let originalCell = cell;
-          
-          terms.forEach((term, idx) => {
-            const regex = new RegExp(`(${term})`, "gi");
-            if (regex.test(cell)) {
-              rowMatched = true;
-              cell = cell.replace(regex, `<span class='${highlightColors[idx % highlightColors.length]}'>$1</span>`);
-              matchesPerTerm.set(term, (matchesPerTerm.get(term) || 0) + 1);
-              totalMatches++;
-            }
-          });
-          
-          rowData[key] = cell;
-          formattedRow[key] = originalCell; // Store original value for sorting
-        });
-        
-        if (rowMatched) {
-          currentResults.push({ display: rowData, sortData: formattedRow, lineNo: lineNo });
-          lineNo++;
-        }
-      });
-
-      document.getElementById("totalMatches").innerText = totalMatches;
-
-      if (matchesPerTerm.size > 0) {
-        const termStrings = [];
-        matchesPerTerm.forEach((count, term) => {
-          const colorClass = highlightColors[terms.indexOf(term) % highlightColors.length];
-          termStrings.push(`<span class='${colorClass}'><b>${term}</b></span>: ${count}`);
-        });
-        document.getElementById("perTermMatches").innerHTML = "Matches per keyword: " + termStrings.join(", ");
-      } else { 
-        document.getElementById("perTermMatches").innerHTML = "No keywords matched."; 
-      }
-      
-      renderResultsTable();
-      resultsContainer.classList.remove("hidden");
-
-      const ip = await getClientIP();
-      const device = getDeviceName();
-      searchLogs.push({ user: currentUserName, ip, device, time: new Date().toLocaleString(), query: input });
-      
-      // Update user search stats
-      userSearchCount++;
-      userLastSearch = input;
-    }
-
-    function renderResultsTable() {
-      const resultText = document.getElementById("resultText");
-      
-      if (currentResults.length === 0) {
-        resultText.innerHTML = "<p>No matches found.</p>";
-        return;
-      }
-      
-      // Get column headers from first result, including Source File
-      // Make sure we include all columns that exist in the data
-      const headers = new Set(['Line No', 'Source File']);
-      
-      // Add all other column names from the data
-      currentResults.forEach(result => {
-        Object.keys(result.sortData).forEach(key => {
-          if (key !== 'lineNo' && key !== '__sourceFile') {
-            headers.add(key);
-          }
-        });
-      });
-      
-      let tableHtml = `<table><thead><tr>`;
-      headers.forEach(header => {
-        const isSorted = header === sortColumn;
-        const sortClass = isSorted ? (sortDirection === 'asc' ? 'asc' : 'desc') : '';
-        tableHtml += `<th class="${sortClass}" onclick="sortTable('${header}')">${header}</th>`;
-      });
-      tableHtml += `</tr></thead><tbody>`;
-      
-      currentResults.forEach((result) => {
-        tableHtml += `<tr>`;
-        headers.forEach(header => {
-          if (header === 'Line No') {
-            tableHtml += `<td>${result.lineNo}</td>`;
-          } else if (header === 'Source File') {
-            tableHtml += `<td>${result.display['Source File'] || ''}</td>`;
-          } else {
-            // Use the display version which has highlights
-            tableHtml += `<td>${result.display[header] || ''}</td>`;
-          }
-        });
-        tableHtml += `</tr>`;
-      });
-      
-      tableHtml += `</tbody></table>`;
-      resultText.innerHTML = tableHtml;
-    }
-
-    function sortTable(column) {
-      if (sortColumn === column) {
-        // Toggle direction if same column clicked again
-        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortColumn = column;
-        sortDirection = 'asc';
-      }
-      
-      currentResults.sort((a, b) => {
-        let valueA, valueB;
-        
-        if (column === 'Line No') {
-          valueA = a.lineNo;
-          valueB = b.lineNo;
-        } else if (column === 'Source File') {
-            valueA = a.display['Source File'] || '';
-            valueB = b.display['Source File'] || '';
-        } else {
-          // Use the sortData which contains the original values (without HTML)
-          valueA = a.sortData[column] || '';
-          valueB = b.sortData[column] || '';
-        }
-        
-        // Convert to numbers if possible for proper numeric sorting
-        // Handle numbers with commas
-        const numA = typeof valueA === 'string' ? 
-          parseFloat(valueA.toString().replace(/,/g, '')) : parseFloat(valueA);
-        const numB = typeof valueB === 'string' ? 
-          parseFloat(valueB.toString().replace(/,/g, '')) : parseFloat(valueB);
-        
-        if (!isNaN(numA) && !isNaN(numB)) {
-          // Both values are numeric, compare as numbers
-          valueA = numA;
-          valueB = numB;
-        } else {
-          // At least one value is not numeric, compare as strings
-          valueA = String(valueA || '').toLowerCase();
-          valueB = String(valueB || '').toLowerCase();
-        }
-        
-        if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
-        if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-      
-      renderResultsTable();
-    }
-    
+    // Export functionality
     function handleExportClick(type) {
       if (currentResults.length === 0) {
-        alert("Please perform a search first to get results.");
+        alert("No data to export. Please perform a search first.");
         return;
       }
+      
+      currentExportType = type;
+      
+      // Show preview modal
       showExportPreview(type);
     }
     
-    // Export and Preview Functions
     function showExportPreview(type) {
-        currentExportType = type;
-        const modal = document.getElementById('exportModal');
-        const previewType = document.getElementById('previewType');
-        const previewTableContainer = document.getElementById('previewTableContainer');
-        const confirmBtn = document.getElementById('confirmExportBtn');
-        const previewMessage = document.getElementById('previewMessage');
-
-        previewType.textContent = type.toUpperCase();
-        previewTableContainer.innerHTML = '';
-        
-        // Prepare data for preview (use plain text version)
-        const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-          .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-        
-        let previewHtml = `<table><thead><tr>`;
-        headers.forEach(header => {
-            previewHtml += `<th>${header}</th>`;
+      const modal = document.getElementById('exportModal');
+      const previewType = document.getElementById('previewType');
+      const previewMessage = document.getElementById('previewMessage');
+      const previewTableContainer = document.getElementById('previewTableContainer');
+      const confirmExportBtn = document.getElementById('confirmExportBtn');
+      
+      previewType.textContent = type.toUpperCase();
+      previewMessage.textContent = `Preview of data to be exported (${currentResults.length} rows):`;
+      
+      // Create preview table
+      let previewHTML = `<table border="1" style="border-collapse: collapse; width: 100%;">`;
+      
+      // Add headers
+      const columns = Object.keys(currentResults[0]).filter(col => 
+        !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false
+      );
+      previewHTML += `<tr>`;
+      previewHTML += `<th style="padding: 8px; background-color: #f0f0f0;">Source File</th>`;
+      previewHTML += `<th style="padding: 8px; background-color: #f0f0f0;">Sheet Name</th>`;
+      columns.forEach(col => {
+        previewHTML += `<th style="padding: 8px; background-color: #f0f0f0;">${col}</th>`;
+      });
+      previewHTML += `</tr>`;
+      
+      // Add data rows (limit to 10 for preview)
+      const previewRows = currentResults.slice(0, 10);
+      previewRows.forEach(row => {
+        previewHTML += `<tr>`;
+        previewHTML += `<td style="padding: 8px;">${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
+        previewHTML += `<td style="padding: 8px;">${row.__sheetName || 'N/A'}</td>`;
+        columns.forEach(col => {
+          previewHTML += `<td style="padding: 8px;">${row[col] || ''}</td>`;
         });
-        previewHtml += `</tr></thead><tbody>`;
-        
-        currentResults.forEach(result => {
-            previewHtml += `<tr>`;
-            headers.forEach(header => {
-                if (header === 'Line No') {
-                    previewHtml += `<td>${result.lineNo}</td>`;
-                } else if (header === 'Source File') {
-                    previewHtml += `<td>${result.display['Source File'] || ''}</td>`;
-                } else {
-                    const value = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-                    previewHtml += `<td>${value}</td>`;
-                }
-            });
-            previewHtml += `</tr>`;
-        });
-        previewHtml += `</tbody></table>`;
-        
-        previewTableContainer.innerHTML = previewHtml;
-
-        // Update message based on export type
-        switch(type) {
-            case 'excel':
-                previewMessage.textContent = 'Preview of data to be exported as an Excel file (.xlsx).';
-                break;
-            case 'csv':
-                previewMessage.textContent = 'Preview of data to be exported as a CSV file (.csv).';
-                break;
-            case 'json':
-                previewMessage.textContent = 'Preview of data to be exported as a JSON file (.json).';
-                break;
-            case 'print':
-                previewMessage.textContent = 'Preview of data for printing or saving as a PDF.';
-                break;
-        }
-
-        // Set up the confirm button action
-        confirmBtn.onclick = () => {
-            if (currentExportType === 'excel') exportToExcel();
-            else if (currentExportType === 'csv') exportToCSV();
-            else if (currentExportType === 'json') exportToJSON();
-            else if (currentExportType === 'print') printResults();
-            closeExportPreview();
-        };
-
-        modal.style.display = 'block';
+        previewHTML += `</tr>`;
+      });
+      
+      previewHTML += `</table>`;
+      
+      if (currentResults.length > 10) {
+        previewHTML += `<p style="text-align: center; margin-top: 10px;">... and ${currentResults.length - 10} more rows</p>`;
+      }
+      
+      previewTableContainer.innerHTML = previewHTML;
+      
+      // Set up confirm button
+      confirmExportBtn.onclick = function() {
+        executeExport(type);
+        closeExportPreview();
+      };
+      
+      modal.style.display = 'block';
     }
-
+    
     function closeExportPreview() {
-        document.getElementById('exportModal').style.display = 'none';
+      document.getElementById('exportModal').style.display = 'none';
+      currentExportType = null;
     }
-
-    function exportToExcel() { 
-      const workbook = XLSX.utils.book_new(); 
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-      
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
+    
+    function executeExport(type) {
+      switch(type) {
+        case 'excel':
+          exportToExcel();
+          break;
+        case 'pdf':
+          exportToPDF();
+          break;
+        case 'csv':
+          exportToCSV();
+          break;
+        case 'print':
+          printResults();
+          break;
+      }
+    }
+    
+    function exportToExcel() {
+      // Prepare data for export (remove internal columns and highlights property)
+      const exportData = currentResults.map(row => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
         
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+        // Only include visible columns
+        const filteredData = {};
+        Object.keys(data).forEach(key => {
+          if (columnVisibility[key] !== false) {
+            filteredData[key] = data[key];
           }
         });
-        return row;
+        
+        return {
+          'Source File': fileNicknames[__sourceFile] || __sourceFile,
+          'Sheet Name': __sheetName || 'N/A',
+          ...filteredData
+        };
       });
       
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Search Results"); 
-      XLSX.writeFile(workbook, "search_results.xlsx"); 
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Search Results");
+      XLSX.writeFile(wb, "search_results.xlsx");
     }
-
+    
+    function exportToPDF() {
+      // Prepare data for export
+      const exportData = currentResults.map(row => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
+        
+        // Only include visible columns
+        const filteredData = {};
+        Object.keys(data).forEach(key => {
+          if (columnVisibility[key] !== false) {
+            filteredData[key] = data[key];
+          }
+        });
+        
+        return {
+          'Source File': fileNicknames[__sourceFile] || __sourceFile,
+          'Sheet Name': __sheetName || 'N/A',
+          ...filteredData
+        };
+      });
+      
+      // Get column headers
+      const headers = Object.keys(exportData[0]);
+      
+      // Convert data to array format for jsPDF autoTable
+      const body = exportData.map(row => {
+        return headers.map(header => String(row[header] || ''));
+      });
+      
+      // Create PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Search Results', 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+      doc.text(`Total records: ${exportData.length}`, 14, 28);
+      
+      // Add table
+      doc.autoTable({
+        head: [headers],
+        body: body,
+        startY: 35,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [52, 152, 219] }
+      });
+      
+      // Save PDF
+      doc.save('search_results.pdf');
+    }
+    
     function exportToCSV() {
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
-      
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
+      // Prepare data for export (remove internal columns and highlights property)
+      const exportData = currentResults.map(row => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
         
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
+        // Only include visible columns
+        const filteredData = {};
+        Object.keys(data).forEach(key => {
+          if (columnVisibility[key] !== false) {
+            filteredData[key] = data[key];
           }
         });
-        return row;
+        
+        return {
+          'Source File': fileNicknames[__sourceFile] || __sourceFile,
+          'Sheet Name': __sheetName || 'N/A',
+          ...filteredData
+        };
       });
       
-      let csvContent = headers.join(',') + '\n';
-      exportData.forEach(row => {
-        const values = headers.map(header => {
-          let value = row[header] || '';
-          value = String(value).replace(/"/g, '""');
-          if (String(value).includes(',')) {
-            value = `"${value}"`;
-          }
-          return value;
-        });
-        csvContent += values.join(',') + '\n';
-      });
+      const headers = Object.keys(exportData[0]);
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => 
+          headers.map(header => {
+            const value = row[header];
+            // Escape commas and quotes in values
+            return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
+              ? `"${value.replace(/"/g, '""')}"` 
+              : value;
+          }).join(',')
+        )
+      ].join('\n');
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'search_results.csv';
-      document.body.appendChild(a);
       a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+      URL.revokeObjectURL(url);
     }
-
-    function exportToJSON() {
-      const headers = Array.from(new Set(['Line No', 'Source File', ...Object.keys(currentResults[0].sortData)
-        .filter(key => key !== 'lineNo' && key !== '__sourceFile')]));
+    
+    function printResults() {
+      const printWindow = window.open('', '_blank');
+      const columns = Object.keys(currentResults[0]).filter(col => 
+        !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false
+      );
       
-      const exportData = currentResults.map(result => {
-        const row = {
-          'Line No': result.lineNo,
-          'Source File': result.display['Source File'] || ''
-        };
-        
-        headers.forEach(header => {
-          if (header !== 'Line No' && header !== 'Source File') {
-            row[header] = String(result.sortData[header] || '').replace(/<[^>]*>/g, '');
-          }
+      let printHTML = `
+        <html>
+          <head>
+            <title>Search Results</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              @media print {
+                body { margin: 0; }
+                table { page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>Search Results</h1>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            <p>Total Results: ${currentResults.length}</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Source File</th>
+                  <th>Sheet Name</th>
+      `;
+      
+      columns.forEach(col => {
+        printHTML += `<th>${col}</th>`;
+      });
+      
+      printHTML += `</tr></thead><tbody>`;
+      
+      currentResults.forEach(row => {
+        printHTML += `<tr>`;
+        printHTML += `<td>${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
+        printHTML += `<td>${row.__sheetName || 'N/A'}</td>`;
+        columns.forEach(col => {
+          printHTML += `<td>${row[col] || ''}</td>`;
         });
-        return row;
+        printHTML += `</tr>`;
       });
       
-      const jsonContent = JSON.stringify(exportData, null, 2);
+      printHTML += `</tbody></table></body></html>`;
       
-      const blob = new Blob([jsonContent], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'search_results.json';
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+      printWindow.print();
     }
-
-    function printResults() { 
-      const printWindow = window.open("", "", "width=800,height=600"); 
-      const content = document.getElementById("resultText").innerHTML; 
-      printWindow.document.write(`<html><head><title>Search Results</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } th, td { border: 1px solid #ddd; padding: 12px; text-align: left; } th { background-color: #e0f0ff; font-weight: bold; } .highlight-0 { background-color: #FFFF00; font-weight: bold; } .highlight-1 { background-color: #00FF00; font-weight: bold; } .highlight-2 { background-color: #00FFFF; font-weight: bold; } .highlight-3 { background-color: #FF00FF; font-weight: bold; color: white; } .highlight-4 { background-color: #FF8000; font-weight: bold; } .highlight-5 { background-color: #FF0080; font-weight: bold; color: white; }</style></head><body><h3>Search Results</h3>${content}</body></html>`); 
-      printWindow.document.close(); 
-      printWindow.focus(); 
-      printWindow.print(); 
-    }
-
-    function formatDuration(seconds) {
-      if (!seconds) return "N/A";
+    
+    // Initialize the application
+    window.onload = async function() {
+      // Set current date/time
+      document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
       
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
+      // Load user data from localStorage
+      loadUserData();
       
-      if (hours > 0) {
-        return `${hours}h ${minutes}m ${secs}s`;
-      } else if (minutes > 0) {
-        return `${minutes}m ${secs}s`;
-      } else {
-        return `${secs}s`;
-      }
-    }
-
-    function loadLogs() { 
-      const logTable = document.getElementById("logTable"); 
-      logTable.innerHTML = ""; 
+      // Load theme
+      loadTheme();
       
-      userSessions.forEach((session, index) => {
-        const loginTime = session.loginTime ? session.loginTime.toLocaleString() : "N/A";
-        const logoutTime = session.logoutTime ? session.logoutTime.toLocaleString() : "Still logged in";
-        const duration = session.duration ? formatDuration(session.duration) : "N/A";
-        const searchCount = session.searchCount || 0;
-        const lastSearch = session.lastSearch || "No searches";
-        
-        const isSelected = selectedLogs.has(index);
-        
-        logTable.innerHTML += `
-          <tr class="log-row ${isSelected ? 'selected' : ''}">
-            <td><input type="checkbox" class="log-checkbox" data-index="${index}" ${isSelected ? 'checked' : ''} onchange="toggleLogSelection(this, ${index})"></td>
-            <td>${session.user}</td>
-            <td>${loginTime}</td>
-            <td>${logoutTime}</td>
-            <td>${duration}</td>
-            <td>${searchCount}</td>
-            <td>${lastSearch}</td>
-          </tr>
-        `;
-      }); 
-      
-      updateSelectedLogsCount();
-    }
-
-    window.onload = async function() { 
-      document.getElementById("lastUpdated").innerText = new Date().toLocaleString(); 
-      
-      loadFileNicknames();
-      loadTheme(); // Load user's saved theme
-      
-      await loadAvailableFiles();
-      
-      document.getElementById("userName").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") setUserName(); 
-      });
-      
-      document.getElementById("searchInput").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") performSearch(); 
-      }); 
-
-      document.getElementById("adminUser").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") checkAdminLogin(); 
-      }); 
-
-      document.getElementById("adminPass").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") checkAdminLogin(); 
-      }); 
-
-      document.getElementById("deletePassword").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") deleteAllLogs(); 
-      }); 
-
       // Add event listeners for theme customization
       document.getElementById('bgColor').addEventListener('input', updateColorPreviews);
       document.getElementById('bgColor2').addEventListener('input', updateColorPreviews);
@@ -1793,13 +2428,46 @@
       
       // Initial preview update
       updateColorPreviews();
-
-      window.onclick = function(event) {
-        const modal = document.getElementById('exportModal');
-        if (event.target == modal) {
-          modal.style.display = 'none';
+      
+      // Set up event listeners
+      document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          performSearch();
         }
-      }
+      });
+      
+      document.getElementById('userName').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          setUserName();
+        }
+      });
+      
+      document.getElementById('adminPass').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          checkAdminLogin();
+        }
+      });
+      
+      // Add event listeners for search type changes
+      document.querySelectorAll('input[name="searchType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          updateSearchHint();
+        });
+      });
+      
+      // Initialize search hint
+      updateSearchHint();
+      
+      // Check if we're on a mobile device
+      checkMobileDevice();
+      
+      // Load files from GitHub
+      await loadFilesFromGitHub();
+      
+      // Add window resize listener for mobile view
+      window.addEventListener('resize', function() {
+        checkMobileDevice();
+      });
     };
   </script>
 </body>
