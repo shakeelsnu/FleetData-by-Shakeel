@@ -550,6 +550,53 @@
       font-size: 12px;
       flex: 1;
     }
+    /* Filter indicator styles */
+    .filter-indicator {
+      display: inline-block;
+      background-color: #e74c3c;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 5px;
+    }
+    .filtered-column {
+      background-color: #fff3cd !important;
+      border-left: 3px solid #ffc107;
+    }
+    .active-filters-panel {
+      background-color: #e8f4fd;
+      border: 1px solid #b8daff;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .active-filter-tag {
+      background-color: #007acc;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .active-filter-tag .remove-filter {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .clear-filters-button {
+      background-color: #e74c3c;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -669,6 +716,14 @@
         <p><strong>Excel Sources Loaded:</strong> <span id="excelUploadDate">Fetching...</span></p>
         <p>Total Matches: <span id="totalMatches">0</span></p>
         <p id="perTermMatches"></p>
+        
+        <!-- Active Filters Panel -->
+        <div id="activeFiltersPanel" class="active-filters-panel hidden">
+          <strong>Active Filters:</strong>
+          <div id="activeFiltersList"></div>
+          <button onclick="clearAllFilters()" class="clear-filters-button">Clear All Filters</button>
+        </div>
+        
         <div class="column-visibility-controls" id="columnVisibilityControls" style="display: none;">
           <div class="column-visibility-header">
             <span>👁️ Show/Hide Columns</span>
@@ -793,122 +848,245 @@
       tableRowHeight: 'normal'
     };
 
-    // Customization functions
-    function toggleCustomizationPanel() {
-      const panel = document.getElementById('customizationPanel');
-      panel.classList.toggle('hidden');
-    }
-
-    function updateThemeColor(color) {
-      customizationSettings.themeColor = color;
-    }
-
-    function updateBackgroundColor(color) {
-      customizationSettings.backgroundColor = color;
-    }
-
-    function updateFontFamily(fontFamily) {
-      customizationSettings.fontFamily = fontFamily;
-    }
-
-    function updateTableRowHeight(height) {
-      customizationSettings.tableRowHeight = height;
-    }
-
-    function applyCustomization() {
-      document.documentElement.style.setProperty('--button-color', customizationSettings.themeColor);
-      document.documentElement.style.setProperty('--header-color', customizationSettings.themeColor);
+    // Initialize when the page loads
+    window.onload = async function() {
+      document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+      loadUserData();
+      loadCustomizationSettings();
       
-      // Calculate a slightly darker version for hover
-      const hoverColor = shadeColor(customizationSettings.themeColor, -20);
-      document.documentElement.style.setProperty('--button-hover-color', hoverColor);
-      
-      document.documentElement.style.setProperty('--bg-color', `linear-gradient(to right, ${customizationSettings.backgroundColor}, ${shadeColor(customizationSettings.backgroundColor, 10)})`);
-      document.documentElement.style.setProperty('--font-family', customizationSettings.fontFamily);
-      
-      const tableCells = document.querySelectorAll('th, td');
-      tableCells.forEach(cell => {
-        switch(customizationSettings.tableRowHeight) {
-          case 'compact':
-            cell.style.padding = '4px 6px';
-            cell.style.fontSize = '0.8rem';
-            break;
-          case 'normal':
-            cell.style.padding = '8px';
-            cell.style.fontSize = '0.9rem';
-            break;
-          case 'spacious':
-            cell.style.padding = '12px 10px';
-            cell.style.fontSize = '1rem';
-            break;
-        }
+      // Add event listeners
+      document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performSearch();
+      });
+      document.getElementById('userName').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') setUserName();
+      });
+      document.getElementById('adminPass').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') checkAdminLogin();
       });
       
-      saveCustomizationSettings();
-      toggleCustomizationPanel();
-    }
-
-    function resetCustomization() {
-      customizationSettings = {
-        themeColor: '#007acc',
-        backgroundColor: '#f0f8ff',
-        fontFamily: "'Segoe UI', sans-serif",
-        tableRowHeight: 'normal'
-      };
+      // Search type change handler
+      document.querySelectorAll('input[name="searchType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          let hint = "";
+          switch(this.value) {
+            case "contains": hint = "Search for text that contains your keywords"; break;
+            case "exact": hint = "Search for exact matches of your keywords"; break;
+            case "startsWith": hint = "Search for text that starts with your keywords"; break;
+            case "endsWith": hint = "Search for text that ends with your keywords"; break;
+          }
+          document.getElementById('searchInput').placeholder = hint;
+        });
+      });
       
-      // Reset UI elements
-      document.getElementById('themeColor').value = customizationSettings.themeColor;
-      document.getElementById('backgroundColor').value = customizationSettings.backgroundColor;
-      document.getElementById('fontFamily').value = customizationSettings.fontFamily;
-      document.getElementById('tableRowHeight').value = customizationSettings.tableRowHeight;
-      
-      applyCustomization();
-    }
+      checkMobileDevice();
+      await loadFilesFromGitHub();
+      window.addEventListener('resize', checkMobileDevice);
+    };
 
-    function saveCustomizationSettings() {
-      localStorage.setItem('dashboardCustomization', JSON.stringify(customizationSettings));
-    }
-
-    function loadCustomizationSettings() {
-      const savedSettings = localStorage.getItem('dashboardCustomization');
-      if (savedSettings) {
-        customizationSettings = JSON.parse(savedSettings);
+    // Load files from GitHub
+    async function loadFilesFromGitHub() {
+      try {
+        const response = await fetch(GITHUB_REPO_URL);
+        if (!response.ok) throw new Error('Failed to fetch files');
+        const files = await response.json();
         
-        // Apply saved settings
-        document.getElementById('themeColor').value = customizationSettings.themeColor;
-        document.getElementById('backgroundColor').value = customizationSettings.backgroundColor;
-        document.getElementById('fontFamily').value = customizationSettings.fontFamily;
-        document.getElementById('tableRowHeight').value = customizationSettings.tableRowHeight;
+        // Filter for data files
+        availableFiles = files.filter(file => 
+          file.name.toLowerCase().endsWith('.xlsx') || 
+          file.name.toLowerCase().endsWith('.xls') ||
+          file.name.toLowerCase().endsWith('.csv')
+        );
         
-        applyCustomization();
+        // Set default nicknames
+        availableFiles.forEach(file => {
+          const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace('.csv', '').replace(/_/g, ' ');
+          fileNicknames[file.name] = simpleName;
+        });
+        
+        updateFileSelect();
+        
+        if (availableFiles.length > 0) {
+          await loadDataFromGitHub(availableFiles[0].name);
+        }
+      } catch (error) {
+        console.error('Error loading files:', error);
+        document.getElementById('fileSelect').innerHTML = '<option value="" selected disabled>-- Error loading files --</option>';
       }
     }
 
-    // Helper function to shade colors
-    function shadeColor(color, percent) {
-      let R = parseInt(color.substring(1, 3), 16);
-      let G = parseInt(color.substring(3, 5), 16);
-      let B = parseInt(color.substring(5, 7), 16);
-
-      R = parseInt(R * (100 + percent) / 100);
-      G = parseInt(G * (100 + percent) / 100);
-      B = parseInt(B * (100 + percent) / 100);
-
-      R = (R < 255) ? R : 255;
-      G = (G < 255) ? G : 255;
-      B = (B < 255) ? B : 255;
-
-      const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
-      const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
-      const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
-
-      return "#" + RR + GG + BB;
+    // Load data from GitHub
+    async function loadDataFromGitHub(filename) {
+      try {
+        const rawUrl = `${GITHUB_RAW_URL}${filename}`;
+        const response = await fetch(rawUrl);
+        
+        if (!response.ok) throw new Error('Failed to fetch file');
+        
+        excelData = [];
+        
+        if (filename.toLowerCase().endsWith('.csv')) {
+          const csvText = await response.text();
+          const lines = csvText.split('\n');
+          if (lines.length > 0) {
+            const headers = lines[0].split(',').map(h => h.trim());
+            for (let i = 1; i < lines.length; i++) {
+              if (lines[i].trim()) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const rowData = {};
+                headers.forEach((header, index) => {
+                  if (header && values[index] !== undefined) {
+                    rowData[header] = values[index];
+                  }
+                });
+                if (Object.keys(rowData).length > 0) {
+                  rowData.__sourceFile = filename;
+                  excelData.push(rowData);
+                }
+              }
+            }
+          }
+        } else {
+          const arrayBuffer = await response.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          
+          workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            if (jsonData.length > 0) {
+              const headers = jsonData[0];
+              for (let i = 1; i < jsonData.length; i++) {
+                const rowData = {};
+                const row = jsonData[i];
+                headers.forEach((header, index) => {
+                  if (header && row[index] !== undefined) {
+                    rowData[header] = row[index];
+                  }
+                });
+                if (Object.keys(rowData).length > 0) {
+                  rowData.__sourceFile = filename;
+                  excelData.push(rowData);
+                }
+              }
+            }
+          });
+        }
+        
+        document.getElementById('excelUploadDate').textContent = `Loaded ${excelData.length} records from ${filename}`;
+        updateColumnCheckboxes();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        document.getElementById('excelUploadDate').textContent = `Error loading data from ${filename}`;
+      }
     }
 
-    // Updated admin login function with case-insensitive username
+    // Update file select dropdown
+    function updateFileSelect() {
+      const fileSelect = document.getElementById('fileSelect');
+      fileSelect.innerHTML = '<option value="" selected disabled>-- Select files to search --</option><option value="all">All Files</option>';
+      availableFiles.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.name;
+        option.textContent = fileNicknames[file.name] || file.name;
+        fileSelect.appendChild(option);
+      });
+      
+      fileSelect.addEventListener('change', async function() {
+        const selectedValue = this.value;
+        if (selectedValue === 'all') {
+          await loadAllDataFromGitHub();
+        } else if (selectedValue) {
+          await loadDataFromGitHub(selectedValue);
+        }
+        updateColumnCheckboxes();
+      });
+    }
+
+    // Load all data files
+    async function loadAllDataFromGitHub() {
+      try {
+        excelData = [];
+        for (const file of availableFiles) {
+          await loadDataFromGitHub(file.name);
+        }
+        document.getElementById('excelUploadDate').textContent = `Loaded data from ${availableFiles.length} files`;
+      } catch (error) {
+        console.error('Error loading all data:', error);
+      }
+    }
+
+    // User authentication
+    function setUserName() {
+      const nameInput = document.getElementById('userName');
+      const nameError = document.getElementById('nameError');
+      const name = nameInput.value.trim();
+      
+      if (!name || !/^[a-zA-Z\s]+$/.test(name)) {
+        nameError.classList.remove('hidden');
+        return;
+      }
+      
+      nameError.classList.add('hidden');
+      currentUserName = name;
+      currentUserLoginTime = new Date();
+      
+      userSessions.push({
+        userName: currentUserName,
+        loginTime: currentUserLoginTime,
+        logoutTime: null,
+        searchCount: 0,
+        lastSearch: ""
+      });
+      
+      saveUserData();
+      document.getElementById('userAuth').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      logUserActivity(`${currentUserName} logged in`);
+    }
+
+    function logout() {
+      const currentSession = userSessions.find(session => 
+        session.userName === currentUserName && session.logoutTime === null);
+      
+      if (currentSession) {
+        currentSession.logoutTime = new Date();
+        currentSession.duration = Math.round((currentSession.logoutTime - currentSession.loginTime) / 1000);
+      }
+      
+      saveUserData();
+      logUserActivity(`${currentUserName} logged out`);
+      
+      currentUserName = "";
+      currentUserLoginTime = null;
+      userSearchCount = 0;
+      userLastSearch = "";
+      
+      document.getElementById('userAuth').classList.remove('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('results').classList.add('hidden');
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('adminLogin').classList.add('hidden');
+      document.getElementById('searchInput').value = "";
+    }
+
+    // Admin functions
+    function toggleAdminLogin() {
+      const adminLogin = document.getElementById('adminLogin');
+      const mainContent = document.getElementById('mainContent');
+      
+      if (adminLogin.classList.contains('hidden')) {
+        adminLogin.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+      } else {
+        adminLogin.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+      }
+    }
+
     function checkAdminLogin() {
       const username = document.getElementById('adminUser').value;
       const password = document.getElementById('adminPass').value;
+      
       if (username.toLowerCase() === 'shakeel' && password === '9332') {
         document.getElementById('adminLogin').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
@@ -920,21 +1098,495 @@
       }
     }
 
-    // Updated delete all logs function with new password
+    function hideAdminPanel() {
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      document.getElementById('adminUser').value = "";
+      document.getElementById('adminPass').value = "";
+      logUserActivity("Admin logged out");
+    }
+
+    function loadAdminData() {
+      updateAdminLogsTable();
+      updateFileNicknameManager();
+    }
+
+    function updateAdminLogsTable() {
+      const logTable = document.getElementById('logTable');
+      logTable.innerHTML = '';
+      
+      userSessions.forEach((session, index) => {
+        const row = document.createElement('tr');
+        row.className = 'log-row';
+        
+        let duration = 'Active';
+        if (session.logoutTime) {
+          const diffMs = new Date(session.logoutTime) - new Date(session.loginTime);
+          const diffMins = Math.round(diffMs / 60000);
+          duration = `${diffMins} min`;
+        }
+        
+        row.innerHTML = `
+          <td><input type="checkbox" class="log-checkbox" onchange="toggleLogSelection(${index}, this.checked)"></td>
+          <td>${session.userName}</td>
+          <td>${new Date(session.loginTime).toLocaleString()}</td>
+          <td>${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}</td>
+          <td>${duration}</td>
+          <td>${session.searchCount || 0}</td>
+          <td>${session.lastSearch || 'None'}</td>
+        `;
+        
+        logTable.appendChild(row);
+      });
+    }
+
+    function toggleLogSelection(index, checked) {
+      if (checked) {
+        selectedLogs.add(index);
+      } else {
+        selectedLogs.delete(index);
+      }
+      updateSelectedLogsDisplay();
+    }
+
+    function toggleSelectAllLogs(checked) {
+      const checkboxes = document.querySelectorAll('.log-checkbox');
+      selectedLogs.clear();
+      
+      checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = checked;
+        if (checked) selectedLogs.add(index);
+      });
+      
+      updateSelectedLogsDisplay();
+    }
+
+    function updateSelectedLogsDisplay() {
+      const selectedCount = document.getElementById('selectedCount');
+      const deleteSelectedContainer = document.getElementById('deleteSelectedContainer');
+      
+      selectedCount.textContent = selectedLogs.size;
+      
+      if (selectedLogs.size > 0) {
+        deleteSelectedContainer.classList.remove('hidden');
+      } else {
+        deleteSelectedContainer.classList.add('hidden');
+      }
+    }
+
+    function deleteSelectedLogs() {
+      if (selectedLogs.size === 0) {
+        alert("No logs selected for deletion");
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to delete ${selectedLogs.size} selected log(s)? This action cannot be undone.`)) {
+        return;
+      }
+      
+      const indicesToDelete = Array.from(selectedLogs).sort((a, b) => b - a);
+      indicesToDelete.forEach(index => userSessions.splice(index, 1));
+      
+      selectedLogs.clear();
+      saveUserData();
+      updateAdminLogsTable();
+      updateSelectedLogsDisplay();
+      
+      alert(`${indicesToDelete.length} log(s) deleted successfully`);
+    }
+
+    function showDeleteConfirmation() {
+      document.getElementById('deleteConfirmation').classList.remove('hidden');
+    }
+
+    function hideDeleteConfirmation() {
+      document.getElementById('deleteConfirmation').classList.add('hidden');
+      document.getElementById('deletePassword').value = '';
+    }
+
     function deleteAllLogs() {
       const password = document.getElementById('deletePassword').value;
+      
       if (password !== '9332') {
-        alert("Incorrect admin password"); return;
+        alert("Incorrect admin password");
+        return;
       }
-      if (!confirm("Are you sure you want to delete ALL user logs? This action cannot be undone.")) return;
+      
+      if (!confirm("Are you sure you want to delete ALL user logs? This action cannot be undone.")) {
+        return;
+      }
+      
       userSessions = [];
       saveUserData();
       updateAdminLogsTable();
       hideDeleteConfirmation();
+      
       alert("All user logs have been deleted");
     }
 
-    // Excel-style filter functions
+    function exportUserLogs() {
+      let logText = "User Activity Logs\nGenerated: " + new Date().toLocaleString() + "\n\n";
+      
+      userSessions.forEach(session => {
+        logText += `User: ${session.userName}\n`;
+        logText += `Login Time: ${new Date(session.loginTime).toLocaleString()}\n`;
+        logText += `Logout Time: ${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}\n`;
+        logText += `Duration: ${session.logoutTime ? Math.round((new Date(session.logoutTime) - new Date(session.loginTime)) / 60000) + ' min' : 'Active'}\n`;
+        logText += `Search Count: ${session.searchCount || 0}\n`;
+        logText += `Last Search: ${session.lastSearch || 'None'}\n`;
+        logText += "----------------------------------------\n";
+      });
+      
+      const blob = new Blob([logText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'user_logs.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // File nickname management
+    function updateFileNicknameManager() {
+      const manager = document.getElementById('fileNicknameManager');
+      manager.innerHTML = '';
+      
+      availableFiles.forEach(file => {
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'file-nickname';
+        fileDiv.innerHTML = `
+          <label for="nickname-${file.name}">${file.name}:</label>
+          <input type="text" id="nickname-${file.name}" value="${fileNicknames[file.name] || file.name}" placeholder="Enter nickname for ${file.name}">
+        `;
+        manager.appendChild(fileDiv);
+      });
+    }
+
+    function saveFileNicknames() {
+      availableFiles.forEach(file => {
+        const nicknameInput = document.getElementById(`nickname-${file.name}`);
+        if (nicknameInput) {
+          fileNicknames[file.name] = nicknameInput.value.trim() || file.name;
+        }
+      });
+      
+      saveUserData();
+      updateFileSelect();
+      alert("File nicknames saved successfully!");
+    }
+
+    function resetFileNicknames() {
+      availableFiles.forEach(file => {
+        const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace('.csv', '').replace(/_/g, ' ');
+        fileNicknames[file.name] = simpleName;
+      });
+      
+      saveUserData();
+      updateFileSelect();
+      updateFileNicknameManager();
+      alert("File nicknames reset to default!");
+    }
+
+    // Search functionality
+    function performSearch() {
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchType = document.querySelector('input[name="searchType"]:checked').value;
+      const selectedColumns = getSelectedColumns();
+      
+      if (!searchText) {
+        alert("Please enter search terms");
+        return;
+      }
+      
+      if (excelData.length === 0) {
+        alert("No data loaded. Please wait for data to load or select different files.");
+        return;
+      }
+      
+      if (selectedColumns.length === 0) {
+        alert("Please select at least one column to search in");
+        return;
+      }
+      
+      document.getElementById('searchButton').disabled = true;
+      
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      
+      try {
+        const results = [];
+        const termMatches = {};
+        
+        searchTerms.forEach((term, index) => {
+          termMatches[term] = 0;
+          
+          excelData.forEach(item => {
+            let matchFound = false;
+            
+            selectedColumns.forEach(column => {
+              if (item[column] !== undefined) {
+                const cellValue = String(item[column]).toLowerCase();
+                const searchTerm = term.toLowerCase();
+                let matches = false;
+                
+                switch(searchType) {
+                  case "contains": 
+                    matches = cellValue.includes(searchTerm); 
+                    break;
+                  case "exact": 
+                    matches = cellValue === searchTerm; 
+                    break;
+                  case "startsWith": 
+                    matches = cellValue.startsWith(searchTerm); 
+                    break;
+                  case "endsWith": 
+                    matches = cellValue.endsWith(searchTerm); 
+                    break;
+                }
+                
+                if (matches) {
+                  matchFound = true;
+                  termMatches[term]++;
+                }
+              }
+            });
+            
+            if (matchFound) {
+              const existingIndex = results.findIndex(r => 
+                JSON.stringify(r) === JSON.stringify(item)
+              );
+              
+              if (existingIndex === -1) {
+                results.push({
+                  ...item,
+                  highlights: [{ term, color: highlightColors[index % highlightColors.length], columns: selectedColumns }]
+                });
+              } else {
+                results[existingIndex].highlights.push({
+                  term,
+                  color: highlightColors[index % highlightColors.length],
+                  columns: selectedColumns
+                });
+              }
+            }
+          });
+        });
+        
+        currentResults = results;
+        userSearchCount++;
+        userLastSearch = searchText;
+        
+        const currentSession = userSessions.find(session => 
+          session.userName === currentUserName && session.logoutTime === null);
+        
+        if (currentSession) {
+          currentSession.searchCount = userSearchCount;
+          currentSession.lastSearch = userLastSearch;
+        }
+        
+        logUserActivity(`${currentUserName} searched for: ${searchText} (${results.length} results)`);
+        saveUserData();
+        
+        displaySearchResults(results, searchTerms, termMatches, selectedColumns);
+      } catch (error) {
+        console.error('Error during search:', error);
+        alert('An error occurred during search. Please try again.');
+      } finally {
+        document.getElementById('searchButton').disabled = false;
+      }
+    }
+
+    function displaySearchResults(results, searchTerms, termMatches, searchColumns) {
+      const resultsDiv = document.getElementById('results');
+      const resultText = document.getElementById('resultText');
+      const totalMatches = document.getElementById('totalMatches');
+      const perTermMatches = document.getElementById('perTermMatches');
+      
+      resultsDiv.classList.remove('hidden');
+      totalMatches.textContent = results.length;
+      
+      let perTermText = "Matches per term: ";
+      searchTerms.forEach((term, index) => {
+        perTermText += `<span class="${highlightColors[index % highlightColors.length]}">${term}</span>: ${termMatches[term]}`;
+        if (index < searchTerms.length - 1) perTermText += ", ";
+      });
+      perTermMatches.innerHTML = perTermText;
+      
+      if (results.length === 0) {
+        resultText.innerHTML = "<p>No results found.</p>";
+        document.getElementById('columnVisibilityControls').style.display = 'none';
+        document.getElementById('activeFiltersPanel').classList.add('hidden');
+        return;
+      }
+      
+      // Get all columns from results
+      const columns = [...new Set(results.flatMap(row => Object.keys(row)))].filter(col => 
+        !col.startsWith('__') && col !== 'highlights'
+      );
+      
+      // Initialize column visibility and filters
+      columns.forEach(col => {
+        if (columnVisibility[col] === undefined) columnVisibility[col] = true;
+        if (columnFilters[col] === undefined) columnFilters[col] = [];
+      });
+      
+      updateColumnVisibilityControls(columns);
+      updateActiveFiltersDisplay();
+      
+      let tableHTML = `<table id="resultsTable"><thead><tr>`;
+      tableHTML += `<th onclick="sortTable('serial')">S/N</th>`;
+      tableHTML += `<th onclick="sortTable('__sourceFile')">Source File</th>`;
+      
+      columns.forEach(col => {
+        if (columnVisibility[col]) {
+          const isFiltered = columnFilters[col] && columnFilters[col].length > 0;
+          const filterClass = isFiltered ? 'filtered-column' : '';
+          const filterIndicator = isFiltered ? '<span class="filter-indicator">!</span>' : '';
+          
+          tableHTML += `
+            <th class="${filterClass}" onclick="sortTable('${col}')">
+              ${col}${filterIndicator}
+              <div class="filter-dropdown">
+                <button class="filter-button" onclick="toggleFilterDropdown('${col}', event)">🔍</button>
+                <div class="filter-dropdown-content">
+                  <input type="text" class="filter-search" placeholder="Search values...">
+                  <div class="filter-options"></div>
+                  <div class="filter-actions">
+                    <button onclick="applyColumnFilter('${col}')" style="background-color: #27ae60;">Apply</button>
+                    <button onclick="clearColumnFilter('${col}')" style="background-color: #e74c3c;">Clear</button>
+                  </div>
+                </div>
+              </div>
+            </th>
+          `;
+        }
+      });
+      
+      tableHTML += `</tr></thead><tbody>`;
+      
+      // Apply column filters to results
+      let filteredResults = applyColumnFilters(results);
+      
+      filteredResults.forEach((result, index) => {
+        tableHTML += `<tr class="result-row">`;
+        tableHTML += `<td>${index + 1}</td>`;
+        tableHTML += `<td>${fileNicknames[result.__sourceFile] || result.__sourceFile}</td>`;
+        
+        columns.forEach(col => {
+          if (columnVisibility[col]) {
+            let cellValue = String(result[col] || '');
+            
+            if (result.highlights) {
+              result.highlights.forEach(highlight => {
+                if (highlight.columns.includes(col)) {
+                  const regex = new RegExp(`(${escapeRegex(highlight.term)})`, 'gi');
+                  cellValue = cellValue.replace(regex, `<span class="${highlight.color}">$1</span>`);
+                }
+              });
+            }
+            
+            tableHTML += `<td>${cellValue}</td>`;
+          }
+        });
+        
+        tableHTML += `</tr>`;
+      });
+      
+      tableHTML += `</tbody></table>`;
+      resultText.innerHTML = tableHTML;
+    }
+
+    // Column visibility functions
+    function updateColumnVisibilityControls(columns) {
+      const visibilityControls = document.getElementById('columnVisibilityControls');
+      const visibilityCheckboxes = document.getElementById('visibilityCheckboxes');
+      
+      visibilityControls.style.display = 'block';
+      visibilityCheckboxes.innerHTML = '';
+      
+      columns.forEach(col => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'visibility-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `vis-${col}`;
+        checkbox.checked = columnVisibility[col];
+        checkbox.onchange = () => toggleColumnVisibility(col, checkbox.checked);
+        
+        const label = document.createElement('label');
+        label.htmlFor = `vis-${col}`;
+        label.textContent = col;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        visibilityCheckboxes.appendChild(checkboxDiv);
+      });
+    }
+
+    function toggleColumnVisibility(column, isVisible) {
+      columnVisibility[column] = isVisible;
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+    }
+
+    function showAllColumns() {
+      Object.keys(columnVisibility).forEach(col => {
+        columnVisibility[col] = true;
+      });
+      
+      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+    }
+
+    function hideAllColumns() {
+      Object.keys(columnVisibility).forEach(col => {
+        columnVisibility[col] = false;
+      });
+      
+      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+    }
+
+    // Filter functions
     function toggleFilterDropdown(column, event) {
       event.stopPropagation();
       
@@ -944,22 +1596,19 @@
       }
       
       const dropdown = event.target.nextElementSibling;
+      
       if (dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
         activeFilterDropdown = null;
       } else {
         dropdown.classList.add('show');
         activeFilterDropdown = dropdown;
-        
-        // Populate filter options with unique values
         populateFilterOptions(column, dropdown);
         
         // Focus on search input
         setTimeout(() => {
           const searchInput = dropdown.querySelector('.filter-search');
-          if (searchInput) {
-            searchInput.focus();
-          }
+          if (searchInput) searchInput.focus();
         }, 100);
       }
     }
@@ -1050,12 +1699,15 @@
       const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
       const termMatches = {};
       const selectedColumns = getSelectedColumns();
+      
       searchTerms.forEach(term => {
         termMatches[term] = currentResults.filter(result => 
           result.highlights.some(h => h.term === term)
         ).length;
       });
+      
       displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+      updateActiveFiltersDisplay();
     }
 
     function clearColumnFilter(column) {
@@ -1063,15 +1715,6 @@
       applyColumnFilter(column);
     }
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-      if (activeFilterDropdown) {
-        activeFilterDropdown.classList.remove('show');
-        activeFilterDropdown = null;
-      }
-    });
-
-    // Enhanced filter function to search across all columns
     function applyColumnFilters(results) {
       let filtered = [...results];
       let hasActiveFilter = false;
@@ -1085,10 +1728,9 @@
       
       if (hasActiveFilter) {
         filtered = filtered.filter(row => {
-          // Check if row matches ANY of the active filters
           return Object.keys(columnFilters).every(column => {
             const filterValues = columnFilters[column];
-            if (!filterValues || filterValues.length === 0) return true; // No filter for this column
+            if (!filterValues || filterValues.length === 0) return true;
             
             const cellValue = String(row[column] || '');
             return filterValues.includes(cellValue);
@@ -1099,279 +1741,489 @@
       return filtered;
     }
 
-    // All other existing functions remain exactly the same
-    async function loadFilesFromGitHub() {
-      try {
-        document.getElementById('fileSelect').innerHTML = '<option value="" selected disabled>-- Loading files... --</option>';
-        const response = await fetch(GITHUB_REPO_URL);
-        if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
-        const files = await response.json();
+    function updateActiveFiltersDisplay() {
+      const activeFiltersPanel = document.getElementById('activeFiltersPanel');
+      const activeFiltersList = document.getElementById('activeFiltersList');
+      
+      let hasActiveFilters = false;
+      Object.keys(columnFilters).forEach(column => {
+        if (columnFilters[column] && columnFilters[column].length > 0) {
+          hasActiveFilters = true;
+        }
+      });
+      
+      if (hasActiveFilters) {
+        activeFiltersPanel.classList.remove('hidden');
+        activeFiltersList.innerHTML = '';
         
-        // Filter for Excel, CSV, and PDF files
-        const dataFiles = files.filter(file => 
-          file.name.toLowerCase().endsWith('.xlsx') || 
-          file.name.toLowerCase().endsWith('.xls') ||
-          file.name.toLowerCase().endsWith('.csv') ||
-          file.name.toLowerCase().endsWith('.pdf')
-        );
-        
-        if (dataFiles.length === 0) throw new Error('No data files found');
-        availableFiles = dataFiles;
-        
-        availableFiles.forEach(file => {
-          const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace('.csv', '').replace('.pdf', '').replace(/_/g, ' ');
-          fileNicknames[file.name] = simpleName;
+        Object.keys(columnFilters).forEach(column => {
+          if (columnFilters[column] && columnFilters[column].length > 0) {
+            const filterTag = document.createElement('div');
+            filterTag.className = 'active-filter-tag';
+            filterTag.innerHTML = `
+              ${column}: ${columnFilters[column].length} value(s)
+              <span class="remove-filter" onclick="removeColumnFilter('${column}')">×</span>
+            `;
+            activeFiltersList.appendChild(filterTag);
+          }
         });
-        
-        updateFileSelect();
-        if (availableFiles.length > 0) {
-          await loadDataFromGitHub(availableFiles[0].name);
-        }
-        return dataFiles;
-      } catch (error) {
-        console.error('Error loading files:', error);
-        document.getElementById('fileSelect').innerHTML = '<option value="" selected disabled>-- Error loading files --</option>';
-        document.getElementById('excelUploadDate').textContent = 'Error loading data';
-        return [];
+      } else {
+        activeFiltersPanel.classList.add('hidden');
       }
     }
 
-    // Updated function to handle different file types
-    async function loadDataFromGitHub(filename) {
-      try {
-        document.getElementById('excelUploadDate').textContent = 'Loading data...';
-        const rawUrl = `${GITHUB_RAW_URL}${filename}`;
-        const response = await fetch(rawUrl);
-        
-        if (!response.ok) throw new Error(`Failed to fetch file: ${response.status}`);
-        
-        excelData = [];
-        
-        if (filename.toLowerCase().endsWith('.csv')) {
-          // Handle CSV files
-          const csvText = await response.text();
-          const lines = csvText.split('\n');
-          if (lines.length > 0) {
-            const headers = lines[0].split(',').map(h => h.trim());
-            for (let i = 1; i < lines.length; i++) {
-              if (lines[i].trim()) {
-                const values = lines[i].split(',').map(v => v.trim());
-                const rowData = {};
-                headers.forEach((header, index) => {
-                  if (header && values[index] !== undefined) {
-                    rowData[header] = values[index];
-                  }
-                });
-                if (Object.keys(rowData).length > 0) {
-                  rowData.__sourceFile = filename;
-                  excelData.push(rowData);
-                }
-              }
-            }
-          }
-        } else if (filename.toLowerCase().endsWith('.pdf')) {
-          // PDF files cannot be parsed in browser, show message
-          document.getElementById('excelUploadDate').textContent = `PDF files cannot be parsed in browser: ${filename}`;
-          return [];
-        } else {
-          // Handle Excel files (xlsx, xls)
-          const arrayBuffer = await response.arrayBuffer();
-          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-          
-          workbook.SheetNames.forEach(sheetName => {
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            if (jsonData.length > 0) {
-              const headers = jsonData[0];
-              for (let i = 1; i < jsonData.length; i++) {
-                const rowData = {};
-                const row = jsonData[i];
-                headers.forEach((header, index) => {
-                  if (header && row[index] !== undefined) {
-                    rowData[header] = row[index];
-                  }
-                });
-                if (Object.keys(rowData).length > 0) {
-                  rowData.__sourceFile = filename;
-                  excelData.push(rowData);
-                }
-              }
-            }
-          });
-        }
-        
-        document.getElementById('excelUploadDate').textContent = `Loaded ${excelData.length} records from ${filename}`;
-        updateColumnCheckboxes();
-        return excelData;
-      } catch (error) {
-        console.error('Error loading data:', error);
-        document.getElementById('excelUploadDate').textContent = `Error loading data from ${filename}`;
-        return [];
-      }
-    }
-
-    // Updated function to load all data files
-    async function loadAllDataFromGitHub() {
-      try {
-        document.getElementById('excelUploadDate').textContent = 'Loading all files...';
-        excelData = [];
-        
-        for (const file of availableFiles) {
-          const rawUrl = `${GITHUB_RAW_URL}${file.name}`;
-          const response = await fetch(rawUrl);
-          
-          if (response.ok) {
-            if (file.name.toLowerCase().endsWith('.csv')) {
-              // Handle CSV files
-              const csvText = await response.text();
-              const lines = csvText.split('\n');
-              if (lines.length > 0) {
-                const headers = lines[0].split(',').map(h => h.trim());
-                for (let i = 1; i < lines.length; i++) {
-                  if (lines[i].trim()) {
-                    const values = lines[i].split(',').map(v => v.trim());
-                    const rowData = {};
-                    headers.forEach((header, index) => {
-                      if (header && values[index] !== undefined) {
-                        rowData[header] = values[index];
-                      }
-                    });
-                    if (Object.keys(rowData).length > 0) {
-                      rowData.__sourceFile = file.name;
-                      excelData.push(rowData);
-                    }
-                  }
-                }
-              }
-            } else if (file.name.toLowerCase().endsWith('.pdf')) {
-              // Skip PDF files for bulk loading
-              continue;
-            } else {
-              // Handle Excel files
-              const arrayBuffer = await response.arrayBuffer();
-              const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-              
-              workbook.SheetNames.forEach(sheetName => {
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                if (jsonData.length > 0) {
-                  const headers = jsonData[0];
-                  for (let i = 1; i < jsonData.length; i++) {
-                    const rowData = {};
-                    const row = jsonData[i];
-                    headers.forEach((header, index) => {
-                      if (header && row[index] !== undefined) {
-                        rowData[header] = row[index];
-                      }
-                    });
-                    if (Object.keys(rowData).length > 0) {
-                      rowData.__sourceFile = file.name;
-                      excelData.push(rowData);
-                    }
-                  }
-                }
-              });
-            }
-          }
-        }
-        
-        document.getElementById('excelUploadDate').textContent = `Loaded ${excelData.length} records from ${availableFiles.length} files`;
-        updateColumnCheckboxes();
-        return excelData;
-      } catch (error) {
-        console.error('Error loading all data:', error);
-        document.getElementById('excelUploadDate').textContent = 'Error loading data';
-        return [];
-      }
-    }
-
-    // Updated file select change handler
-    function updateFileSelect() {
-      const fileSelect = document.getElementById('fileSelect');
-      fileSelect.innerHTML = '<option value="" selected disabled>-- Select files to search --</option><option value="all">All Files</option>';
-      availableFiles.forEach(file => {
-        const option = document.createElement('option');
-        option.value = file.name;
-        option.textContent = fileNicknames[file.name] || file.name;
-        fileSelect.appendChild(option);
+    function clearAllFilters() {
+      Object.keys(columnFilters).forEach(column => {
+        columnFilters[column] = [];
       });
-      fileSelect.addEventListener('change', async function() {
-        const selectedValue = this.value;
-        if (selectedValue === 'all') {
-          await loadAllDataFromGitHub();
-        } else if (selectedValue) {
-          await loadDataFromGitHub(selectedValue);
-        }
-        updateColumnCheckboxes();
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
       });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+      updateActiveFiltersDisplay();
     }
 
-    // Rest of the functions remain exactly the same...
-    function setUserName() {
-      const nameInput = document.getElementById('userName');
-      const nameError = document.getElementById('nameError');
-      const name = nameInput.value.trim();
-      if (!name || !/^[a-zA-Z\s]+$/.test(name)) {
-        nameError.classList.remove('hidden');
+    function removeColumnFilter(column) {
+      columnFilters[column] = [];
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = currentResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
+      updateActiveFiltersDisplay();
+    }
+
+    // Column selection functions
+    function updateColumnCheckboxes() {
+      const columnCheckboxes = document.getElementById('columnCheckboxes');
+      columnCheckboxes.innerHTML = '';
+      
+      if (excelData.length === 0) {
+        columnCheckboxes.innerHTML = '<p>No data available. Please select files first.</p>';
         return;
       }
-      nameError.classList.add('hidden');
-      currentUserName = name;
-      currentUserLoginTime = new Date();
-      userSessions.push({
-        userName: currentUserName,
-        loginTime: currentUserLoginTime,
-        logoutTime: null,
-        searchCount: 0,
-        lastSearch: ""
+      
+      availableColumns = [...new Set(excelData.flatMap(row => Object.keys(row)))].filter(col => 
+        !col.startsWith('__')
+      );
+      
+      if (availableColumns.length === 0) {
+        columnCheckboxes.innerHTML = '<p>No columns found in the data</p>';
+        return;
+      }
+      
+      availableColumns.forEach(column => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'column-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `col-${column}`;
+        checkbox.value = column;
+        checkbox.checked = true;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `col-${column}`;
+        label.textContent = column;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        columnCheckboxes.appendChild(checkboxDiv);
       });
-      saveUserData();
-      document.getElementById('userAuth').classList.add('hidden');
-      document.getElementById('mainContent').classList.remove('hidden');
-      logUserActivity(`${currentUserName} logged in`);
     }
-    
-    function logout() {
-      const currentSession = userSessions.find(session => 
-        session.userName === currentUserName && session.logoutTime === null);
-      if (currentSession) {
-        currentSession.logoutTime = new Date();
-        currentSession.duration = Math.round((currentSession.logoutTime - currentSession.loginTime) / 1000);
-      }
-      saveUserData();
-      logUserActivity(`${currentUserName} logged out`);
-      currentUserName = "";
-      currentUserLoginTime = null;
-      userSearchCount = 0;
-      userLastSearch = "";
-      document.getElementById('userAuth').classList.remove('hidden');
-      document.getElementById('mainContent').classList.add('hidden');
-      document.getElementById('results').classList.add('hidden');
-      document.getElementById('adminPanel').classList.add('hidden');
-      document.getElementById('adminLogin').classList.add('hidden');
-      document.getElementById('searchInput').value = "";
+
+    function selectAllColumns() {
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+      });
     }
-    
-    function toggleAdminLogin() {
-      const adminLogin = document.getElementById('adminLogin');
-      const mainContent = document.getElementById('mainContent');
-      if (adminLogin.classList.contains('hidden')) {
-        adminLogin.classList.remove('hidden');
-        mainContent.classList.add('hidden');
+
+    function deselectAllColumns() {
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    }
+
+    function getSelectedColumns() {
+      const selectedColumns = [];
+      document.querySelectorAll('.column-checkbox input[type="checkbox"]:checked').forEach(checkbox => {
+        selectedColumns.push(checkbox.value);
+      });
+      return selectedColumns;
+    }
+
+    // Utility functions
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function sortTable(column) {
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
-        adminLogin.classList.add('hidden');
-        mainContent.classList.remove('hidden');
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+      
+      let sortedResults = [...currentResults];
+      
+      if (column === 'serial') {
+        // No sorting needed for serial numbers
+      } else {
+        sortedResults.sort((a, b) => {
+          let aValue = a[column];
+          let bValue = b[column];
+          
+          if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+          }
+          
+          if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      
+      document.querySelectorAll('#resultsTable th').forEach(th => {
+        th.classList.remove('asc', 'desc');
+        if (th.textContent.includes(column) || th.getAttribute('onclick')?.includes(column)) {
+          th.classList.add(sortDirection);
+        }
+      });
+      
+      const searchText = document.getElementById('searchInput').value.trim();
+      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
+      const termMatches = {};
+      const selectedColumns = getSelectedColumns();
+      
+      searchTerms.forEach(term => {
+        termMatches[term] = sortedResults.filter(result => 
+          result.highlights.some(h => h.term === term)
+        ).length;
+      });
+      
+      displaySearchResults(sortedResults, searchTerms, termMatches, selectedColumns);
+    }
+
+    // Customization functions
+    function toggleCustomizationPanel() {
+      const panel = document.getElementById('customizationPanel');
+      panel.classList.toggle('hidden');
+    }
+
+    function updateThemeColor(color) {
+      customizationSettings.themeColor = color;
+    }
+
+    function updateBackgroundColor(color) {
+      customizationSettings.backgroundColor = color;
+    }
+
+    function updateFontFamily(fontFamily) {
+      customizationSettings.fontFamily = fontFamily;
+    }
+
+    function updateTableRowHeight(height) {
+      customizationSettings.tableRowHeight = height;
+    }
+
+    function applyCustomization() {
+      document.documentElement.style.setProperty('--button-color', customizationSettings.themeColor);
+      document.documentElement.style.setProperty('--header-color', customizationSettings.themeColor);
+      
+      const hoverColor = shadeColor(customizationSettings.themeColor, -20);
+      document.documentElement.style.setProperty('--button-hover-color', hoverColor);
+      
+      document.documentElement.style.setProperty('--bg-color', `linear-gradient(to right, ${customizationSettings.backgroundColor}, ${shadeColor(customizationSettings.backgroundColor, 10)})`);
+      document.documentElement.style.setProperty('--font-family', customizationSettings.fontFamily);
+      
+      const tableCells = document.querySelectorAll('th, td');
+      tableCells.forEach(cell => {
+        switch(customizationSettings.tableRowHeight) {
+          case 'compact':
+            cell.style.padding = '4px 6px';
+            cell.style.fontSize = '0.8rem';
+            break;
+          case 'normal':
+            cell.style.padding = '8px';
+            cell.style.fontSize = '0.9rem';
+            break;
+          case 'spacious':
+            cell.style.padding = '12px 10px';
+            cell.style.fontSize = '1rem';
+            break;
+        }
+      });
+      
+      saveCustomizationSettings();
+      toggleCustomizationPanel();
+    }
+
+    function resetCustomization() {
+      customizationSettings = {
+        themeColor: '#007acc',
+        backgroundColor: '#f0f8ff',
+        fontFamily: "'Segoe UI', sans-serif",
+        tableRowHeight: 'normal'
+      };
+      
+      document.getElementById('themeColor').value = customizationSettings.themeColor;
+      document.getElementById('backgroundColor').value = customizationSettings.backgroundColor;
+      document.getElementById('fontFamily').value = customizationSettings.fontFamily;
+      document.getElementById('tableRowHeight').value = customizationSettings.tableRowHeight;
+      
+      applyCustomization();
+    }
+
+    function saveCustomizationSettings() {
+      localStorage.setItem('dashboardCustomization', JSON.stringify(customizationSettings));
+    }
+
+    function loadCustomizationSettings() {
+      const savedSettings = localStorage.getItem('dashboardCustomization');
+      if (savedSettings) {
+        customizationSettings = JSON.parse(savedSettings);
+        
+        document.getElementById('themeColor').value = customizationSettings.themeColor;
+        document.getElementById('backgroundColor').value = customizationSettings.backgroundColor;
+        document.getElementById('fontFamily').value = customizationSettings.fontFamily;
+        document.getElementById('tableRowHeight').value = customizationSettings.tableRowHeight;
+        
+        applyCustomization();
       }
     }
-    
-    function hideAdminPanel() {
-      document.getElementById('adminPanel').classList.add('hidden');
-      document.getElementById('mainContent').classList.remove('hidden');
-      document.getElementById('adminUser').value = "";
-      document.getElementById('adminPass').value = "";
-      logUserActivity("Admin logged out");
+
+    function shadeColor(color, percent) {
+      let R = parseInt(color.substring(1, 3), 16);
+      let G = parseInt(color.substring(3, 5), 16);
+      let B = parseInt(color.substring(5, 7), 16);
+
+      R = parseInt(R * (100 + percent) / 100);
+      G = parseInt(G * (100 + percent) / 100);
+      B = parseInt(B * (100 + percent) / 100);
+
+      R = R < 255 ? R : 255;
+      G = G < 255 ? G : 255;
+      B = B < 255 ? B : 255;
+
+      const RR = R.toString(16).length === 1 ? "0" + R.toString(16) : R.toString(16);
+      const GG = G.toString(16).length === 1 ? "0" + G.toString(16) : G.toString(16);
+      const BB = B.toString(16).length === 1 ? "0" + B.toString(16) : B.toString(16);
+
+      return "#" + RR + GG + BB;
     }
-    
+
+    // Mobile view functions
+    function checkMobileDevice() {
+      isMobileView = window.innerWidth <= 768;
+      updateMobileView();
+    }
+
+    function toggleMobileView() {
+      isMobileView = !isMobileView;
+      updateMobileView();
+      document.getElementById('mobileViewToggle').textContent = isMobileView ? "🖥️ Desktop View" : "📱 Mobile View";
+    }
+
+    function updateMobileView() {
+      if (isMobileView) {
+        document.body.classList.add('mobile-view');
+      } else {
+        document.body.classList.remove('mobile-view');
+      }
+    }
+
+    // Export functions
+    function handleExportClick(type) {
+      if (currentResults.length === 0) {
+        alert("No data to export. Please perform a search first.");
+        return;
+      }
+      currentExportType = type;
+      showExportPreview(type);
+    }
+
+    function showExportPreview(type) {
+      const modal = document.getElementById('exportModal');
+      const previewType = document.getElementById('previewType');
+      const previewMessage = document.getElementById('previewMessage');
+      const previewTableContainer = document.getElementById('previewTableContainer');
+      const confirmExportBtn = document.getElementById('confirmExportBtn');
+      
+      previewType.textContent = type.toUpperCase();
+      previewMessage.textContent = `Preview of data to be exported (${currentResults.length} rows):`;
+      
+      let previewHTML = `<table border="1" style="border-collapse: collapse; width: 100%;">`;
+      const columns = Object.keys(currentResults[0]).filter(col => 
+        !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false
+      );
+      
+      previewHTML += `<tr><th style="padding: 6px; background-color: #f0f0f0;">S/N</th><th style="padding: 6px; background-color: #f0f0f0;">Source File</th>`;
+      columns.forEach(col => previewHTML += `<th style="padding: 6px; background-color: #f0f0f0;">${col}</th>`);
+      previewHTML += `</tr>`;
+      
+      const previewRows = currentResults.slice(0, 10);
+      previewRows.forEach((row, index) => {
+        previewHTML += `<tr><td style="padding: 6px;">${index + 1}</td><td style="padding: 6px;">${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
+        columns.forEach(col => previewHTML += `<td style="padding: 6px;">${row[col] || ''}</td>`);
+        previewHTML += `</tr>`;
+      });
+      
+      previewHTML += `</table>`;
+      if (currentResults.length > 10) {
+        previewHTML += `<p style="text-align: center; margin-top: 8px;">... and ${currentResults.length - 10} more rows</p>`;
+      }
+      
+      previewTableContainer.innerHTML = previewHTML;
+      confirmExportBtn.onclick = function() { 
+        executeExport(type); 
+        closeExportPreview(); 
+      };
+      
+      modal.style.display = 'block';
+    }
+
+    function closeExportPreview() {
+      document.getElementById('exportModal').style.display = 'none';
+      currentExportType = null;
+    }
+
+    function executeExport(type) {
+      switch(type) {
+        case 'excel': exportToExcel(); break;
+        case 'pdf': exportToPDF(); break;
+        case 'csv': exportToCSV(); break;
+        case 'print': printResults(); break;
+      }
+    }
+
+    function exportToExcel() {
+      const exportData = currentResults.map((row, index) => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
+        const filteredData = {};
+        Object.keys(data).forEach(key => { 
+          if (columnVisibility[key] !== false) filteredData[key] = data[key]; 
+        });
+        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
+      });
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Search Results");
+      XLSX.writeFile(wb, "search_results.xlsx");
+    }
+
+    function exportToPDF() {
+      const exportData = currentResults.map((row, index) => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
+        const filteredData = {};
+        Object.keys(data).forEach(key => { 
+          if (columnVisibility[key] !== false) filteredData[key] = data[key]; 
+        });
+        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
+      });
+      
+      const headers = Object.keys(exportData[0]);
+      const body = exportData.map(row => headers.map(header => String(row[header] || '')));
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Search Results', 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+      doc.text(`Total records: ${exportData.length}`, 14, 28);
+      doc.autoTable({ 
+        head: [headers], 
+        body: body, 
+        startY: 35, 
+        styles: { fontSize: 8 }, 
+        headStyles: { fillColor: [52, 152, 219] } 
+      });
+      doc.save('search_results.pdf');
+    }
+
+    function exportToCSV() {
+      const exportData = currentResults.map((row, index) => {
+        const { highlights, __sourceFile, __sheetName, ...data } = row;
+        const filteredData = {};
+        Object.keys(data).forEach(key => { 
+          if (columnVisibility[key] !== false) filteredData[key] = data[key]; 
+        });
+        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
+      });
+      
+      const headers = Object.keys(exportData[0]);
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => headers.map(header => {
+          const value = row[header];
+          return typeof value === 'string' && (value.includes(',') || value.includes('"')) ? 
+            `"${value.replace(/"/g, '""')}"` : value;
+        }).join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'search_results.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printResults() {
+      const printWindow = window.open('', '_blank');
+      const columns = Object.keys(currentResults[0]).filter(col => 
+        !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false
+      );
+      
+      let printHTML = `<html><head><title>Search Results</title><style>
+        body { font-family: Arial, sans-serif; margin: 15px; } 
+        table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; } 
+        th { background-color: #f2f2f2; }
+        @media print { body { margin: 0; } table { page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } }
+      </style></head><body>
+        <h1>Search Results</h1>
+        <p>Generated: ${new Date().toLocaleString()}</p>
+        <p>Total Results: ${currentResults.length}</p>
+        <table><thead><tr><th>S/N</th><th>Source File</th>`;
+      
+      columns.forEach(col => printHTML += `<th>${col}</th>`);
+      printHTML += `</tr></thead><tbody>`;
+      
+      currentResults.forEach((row, index) => {
+        printHTML += `<tr><td>${index + 1}</td><td>${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
+        columns.forEach(col => printHTML += `<td>${row[col] || ''}</td>`);
+        printHTML += `</tr>`;
+      });
+      
+      printHTML += `</tbody></table></body></html>`;
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    // Data persistence functions
     function loadUserData() {
       const savedData = localStorage.getItem('excelSearchData');
       if (savedData) {
@@ -1381,7 +2233,7 @@
         userSessions = data.userSessions || [];
       }
     }
-    
+
     function saveUserData() {
       const data = {
         fileNicknames,
@@ -1391,669 +2243,35 @@
       };
       localStorage.setItem('excelSearchData', JSON.stringify(data));
     }
-    
-    function updateColumnCheckboxes() {
-      const columnCheckboxes = document.getElementById('columnCheckboxes');
-      columnCheckboxes.innerHTML = '';
-      if (excelData.length === 0) {
-        columnCheckboxes.innerHTML = '<p>No data available. Please select files first.</p>';
-        return;
-      }
-      availableColumns = [...new Set(excelData.flatMap(row => Object.keys(row)))].filter(col => 
-        !col.startsWith('__')
-      );
-      if (availableColumns.length === 0) {
-        columnCheckboxes.innerHTML = '<p>No columns found in the data</p>';
-        return;
-      }
-      availableColumns.forEach(column => {
-        const checkboxDiv = document.createElement('div');
-        checkboxDiv.className = 'column-checkbox';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `col-${column}`;
-        checkbox.value = column;
-        checkbox.checked = true;
-        const label = document.createElement('label');
-        label.htmlFor = `col-${column}`;
-        label.textContent = column;
-        checkboxDiv.appendChild(checkbox);
-        checkboxDiv.appendChild(label);
-        columnCheckboxes.appendChild(checkboxDiv);
+
+    function logUserActivity(activity) {
+      searchLogs.push({ 
+        user: currentUserName || 'Unknown', 
+        activity: activity, 
+        timestamp: new Date().toISOString() 
       });
-    }
-    
-    function selectAllColumns() {
-      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
-        checkbox.checked = true;
-      });
-    }
-    
-    function deselectAllColumns() {
-      document.querySelectorAll('.column-checkbox input[type="checkbox"]').forEach(checkbox => {
-        checkbox.checked = false;
-      });
-    }
-    
-    function getSelectedColumns() {
-      const selectedColumns = [];
-      document.querySelectorAll('.column-checkbox input[type="checkbox"]:checked').forEach(checkbox => {
-        selectedColumns.push(checkbox.value);
-      });
-      return selectedColumns;
-    }
-    
-    async function performSearch() {
-      const searchText = document.getElementById('searchInput').value.trim();
-      const searchType = document.querySelector('input[name="searchType"]:checked').value;
-      const selectedColumns = getSelectedColumns();
-      if (!searchText) {
-        alert("Please enter search terms");
-        return;
-      }
-      if (excelData.length === 0) {
-        alert("No data loaded. Please wait for data to load or select different files.");
-        return;
-      }
-      if (selectedColumns.length === 0) {
-        alert("Please select at least one column to search in");
-        return;
-      }
-      document.getElementById('searchButton').disabled = true;
-      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
-      if (searchTerms.length === 0) {
-        alert("Please enter valid search terms");
-        document.getElementById('searchButton').disabled = false;
-        return;
-      }
-      try {
-        const results = [];
-        const termMatches = {};
-        const searchColumns = selectedColumns;
-        
-        searchTerms.forEach((term, index) => {
-          termMatches[term] = 0;
-          excelData.forEach(item => {
-            let matchFound = false;
-            searchColumns.forEach(column => {
-              if (item[column] !== undefined) {
-                const cellValue = String(item[column]).toLowerCase();
-                const searchTerm = term.toLowerCase();
-                let matches = false;
-                switch(searchType) {
-                  case "contains": matches = cellValue.includes(searchTerm); break;
-                  case "exact": matches = cellValue === searchTerm; break;
-                  case "startsWith": matches = cellValue.startsWith(searchTerm); break;
-                  case "endsWith": matches = cellValue.endsWith(searchTerm); break;
-                }
-                if (matches) {
-                  matchFound = true;
-                  termMatches[term]++;
-                }
-              }
-            });
-            if (matchFound) {
-              const existingIndex = results.findIndex(r => 
-                JSON.stringify(r) === JSON.stringify(item)
-              );
-              if (existingIndex === -1) {
-                results.push({
-                  ...item,
-                  highlights: [{ term, color: highlightColors[index % highlightColors.length], columns: searchColumns }]
-                });
-              } else {
-                results[existingIndex].highlights.push({
-                  term,
-                  color: highlightColors[index % highlightColors.length],
-                  columns: searchColumns
-                });
-              }
-            }
-          });
-        });
-        currentResults = results;
-        userSearchCount++;
-        userLastSearch = searchText;
-        const currentSession = userSessions.find(session => 
-          session.userName === currentUserName && session.logoutTime === null);
-        if (currentSession) {
-          currentSession.searchCount = userSearchCount;
-          currentSession.lastSearch = userLastSearch;
-        }
-        logUserActivity(`${currentUserName} searched for: ${searchText} (${results.length} results)`);
-        saveUserData();
-        displaySearchResults(results, searchTerms, termMatches, searchColumns);
-      } catch (error) {
-        console.error('Error during search:', error);
-        alert('An error occurred during search. Please try again.');
-      } finally {
-        document.getElementById('searchButton').disabled = false;
-      }
-    }
-    
-    function displaySearchResults(results, searchTerms, termMatches, searchColumns) {
-      const resultsDiv = document.getElementById('results');
-      const resultText = document.getElementById('resultText');
-      const totalMatches = document.getElementById('totalMatches');
-      const perTermMatches = document.getElementById('perTermMatches');
-      resultsDiv.classList.remove('hidden');
-      totalMatches.textContent = results.length;
-      let perTermText = "Matches per term: ";
-      searchTerms.forEach((term, index) => {
-        perTermText += `<span class="${highlightColors[index % highlightColors.length]}">${term}</span>: ${termMatches[term]}`;
-        if (index < searchTerms.length - 1) perTermText += ", ";
-      });
-      perTermMatches.innerHTML = perTermText;
-      if (results.length === 0) {
-        resultText.innerHTML = "<p>No results found.</p>";
-        document.getElementById('columnVisibilityControls').style.display = 'none';
-        return;
-      }
-      const columns = Object.keys(results[0]).filter(col => 
-        !col.startsWith('__') && col !== 'highlights'
-      );
-      columns.forEach(col => {
-        if (columnVisibility[col] === undefined) columnVisibility[col] = true;
-        if (columnFilters[col] === undefined) columnFilters[col] = [];
-      });
-      updateColumnVisibilityControls(columns);
-      let tableHTML = `<table id="resultsTable"><thead><tr>`;
-      tableHTML += `<th onclick="sortTable('serial')">S/N</th>`;
-      tableHTML += `<th onclick="sortTable('__sourceFile')">Source File</th>`;
-      columns.forEach(col => {
-        if (columnVisibility[col]) {
-          tableHTML += `<th onclick="sortTable('${col}')">${col}
-            <div class="filter-dropdown">
-              <button class="filter-button" onclick="toggleFilterDropdown('${col}', event)">▼</button>
-              <div class="filter-dropdown-content">
-                <input type="text" class="filter-search" placeholder="Search values...">
-                <div class="filter-options"></div>
-                <div class="filter-actions">
-                  <button onclick="applyColumnFilter('${col}')" style="background-color: #27ae60;">Apply</button>
-                  <button onclick="clearColumnFilter('${col}')" style="background-color: #e74c3c;">Clear</button>
-                </div>
-              </div>
-            </div>
-          </th>`;
-        }
-      });
-      tableHTML += `</tr></thead><tbody>`;
       
-      let filteredResults = applyColumnFilters(results);
-      
-      filteredResults.forEach((result, index) => {
-        tableHTML += `<tr class="result-row">`;
-        tableHTML += `<td>${index + 1}</td>`;
-        tableHTML += `<td>${fileNicknames[result.__sourceFile] || result.__sourceFile}</td>`;
-        columns.forEach(col => {
-          if (columnVisibility[col]) {
-            let cellValue = String(result[col] || '');
-            if (result.highlights) {
-              result.highlights.forEach(highlight => {
-                if (highlight.columns.includes(col)) {
-                  const regex = new RegExp(`(${escapeRegex(highlight.term)})`, 'gi');
-                  cellValue = cellValue.replace(regex, `<span class="${highlight.color}">$1</span>`);
-                }
-              });
-            }
-            tableHTML += `<td>${cellValue}</td>`;
-          }
-        });
-        tableHTML += `</tr>`;
-      });
-      tableHTML += `</tbody></table>`;
-      resultText.innerHTML = tableHTML;
-    }
-    
-    function updateColumnVisibilityControls(columns) {
-      const visibilityControls = document.getElementById('columnVisibilityControls');
-      const visibilityCheckboxes = document.getElementById('visibilityCheckboxes');
-      visibilityControls.style.display = 'block';
-      visibilityCheckboxes.innerHTML = '';
-      columns.forEach(col => {
-        const checkboxDiv = document.createElement('div');
-        checkboxDiv.className = 'visibility-checkbox';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `vis-${col}`;
-        checkbox.checked = columnVisibility[col];
-        checkbox.onchange = () => toggleColumnVisibility(col, checkbox.checked);
-        const label = document.createElement('label');
-        label.htmlFor = `vis-${col}`;
-        label.textContent = col;
-        checkboxDiv.appendChild(checkbox);
-        checkboxDiv.appendChild(label);
-        visibilityCheckboxes.appendChild(checkboxDiv);
-      });
-    }
-    
-    function toggleColumnVisibility(column, isVisible) {
-      columnVisibility[column] = isVisible;
-      const searchText = document.getElementById('searchInput').value.trim();
-      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
-      const termMatches = {};
-      const selectedColumns = getSelectedColumns();
-      searchTerms.forEach(term => {
-        termMatches[term] = currentResults.filter(result => 
-          result.highlights.some(h => h.term === term)
-        ).length;
-      });
-      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
-    }
-    
-    function showAllColumns() {
-      Object.keys(columnVisibility).forEach(col => columnVisibility[col] = true);
-      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => checkbox.checked = true);
-      const searchText = document.getElementById('searchInput').value.trim();
-      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
-      const termMatches = {};
-      const selectedColumns = getSelectedColumns();
-      searchTerms.forEach(term => {
-        termMatches[term] = currentResults.filter(result => result.highlights.some(h => h.term === term)).length;
-      });
-      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
-    }
-    
-    function hideAllColumns() {
-      Object.keys(columnVisibility).forEach(col => columnVisibility[col] = false);
-      document.querySelectorAll('.visibility-checkbox input').forEach(checkbox => checkbox.checked = false);
-      const searchText = document.getElementById('searchInput').value.trim();
-      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
-      const termMatches = {};
-      const selectedColumns = getSelectedColumns();
-      searchTerms.forEach(term => {
-        termMatches[term] = currentResults.filter(result => result.highlights.some(h => h.term === term)).length;
-      });
-      displaySearchResults(currentResults, searchTerms, termMatches, selectedColumns);
-    }
-    
-    function escapeRegex(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-    
-    function sortTable(column) {
-      if (sortColumn === column) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-      else { sortColumn = column; sortDirection = 'asc'; }
-      
-      let sortedResults = [...currentResults];
-      if (column === 'serial') {
-        // No sorting needed for serial numbers
-      } else {
-        sortedResults.sort((a, b) => {
-          let aValue = a[column]; 
-          let bValue = b[column];
-          if (typeof aValue === 'string') { 
-            aValue = aValue.toLowerCase(); 
-            bValue = bValue.toLowerCase(); 
-          }
-          if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-          return 0;
-        });
+      if (searchLogs.length > 1000) {
+        searchLogs = searchLogs.slice(-1000);
       }
       
-      document.querySelectorAll('#resultsTable th').forEach(th => {
-        th.classList.remove('asc', 'desc');
-        if (th.textContent.includes(column) || th.getAttribute('onclick')?.includes(column)) th.classList.add(sortDirection);
-      });
-      
-      const searchText = document.getElementById('searchInput').value.trim();
-      const searchTerms = searchText.split(',').map(term => term.trim()).filter(term => term.length > 0);
-      const termMatches = {};
-      const selectedColumns = getSelectedColumns();
-      searchTerms.forEach(term => {
-        termMatches[term] = sortedResults.filter(result => result.highlights.some(h => h.term === term)).length;
-      });
-      
-      // Create a temporary display with sorted results
-      const resultsDiv = document.getElementById('results');
-      const resultText = document.getElementById('resultText');
-      const columns = Object.keys(sortedResults[0]).filter(col => 
-        !col.startsWith('__') && col !== 'highlights'
-      );
-      
-      let tableHTML = `<table id="resultsTable"><thead><tr>`;
-      tableHTML += `<th onclick="sortTable('serial')">S/N</th>`;
-      tableHTML += `<th onclick="sortTable('__sourceFile')">Source File</th>`;
-      columns.forEach(col => {
-        if (columnVisibility[col]) {
-          tableHTML += `<th onclick="sortTable('${col}')">${col}
-            <div class="filter-dropdown">
-              <button class="filter-button" onclick="toggleFilterDropdown('${col}', event)">▼</button>
-              <div class="filter-dropdown-content">
-                <input type="text" class="filter-search" placeholder="Search values...">
-                <div class="filter-options"></div>
-                <div class="filter-actions">
-                  <button onclick="applyColumnFilter('${col}')" style="background-color: #27ae60;">Apply</button>
-                  <button onclick="clearColumnFilter('${col}')" style="background-color: #e74c3c;">Clear</button>
-                </div>
-              </div>
-            </div>
-          </th>`;
-        }
-      });
-      tableHTML += `</tr></thead><tbody>`;
-      
-      let filteredResults = applyColumnFilters(sortedResults);
-      
-      filteredResults.forEach((result, index) => {
-        tableHTML += `<tr class="result-row">`;
-        tableHTML += `<td>${index + 1}</td>`;
-        tableHTML += `<td>${fileNicknames[result.__sourceFile] || result.__sourceFile}</td>`;
-        columns.forEach(col => {
-          if (columnVisibility[col]) {
-            let cellValue = String(result[col] || '');
-            if (result.highlights) {
-              result.highlights.forEach(highlight => {
-                if (highlight.columns.includes(col)) {
-                  const regex = new RegExp(`(${escapeRegex(highlight.term)})`, 'gi');
-                  cellValue = cellValue.replace(regex, `<span class="${highlight.color}">$1</span>`);
-                }
-              });
-            }
-            tableHTML += `<td>${cellValue}</td>`;
-          }
-        });
-        tableHTML += `</tr>`;
-      });
-      tableHTML += `</tbody></table>`;
-      resultText.innerHTML = tableHTML;
-      
-      // Update the table headers to show sort direction
-      document.querySelectorAll('#resultsTable th').forEach(th => {
-        th.classList.remove('asc', 'desc');
-        if (th.textContent.includes(column) || th.getAttribute('onclick')?.includes(column)) th.classList.add(sortDirection);
-      });
+      saveUserData();
     }
 
-    function loadAdminData() {
-      updateAdminLogsTable();
-      updateFileNicknameManager();
-    }
-    
-    function updateAdminLogsTable() {
-      const logTable = document.getElementById('logTable');
-      logTable.innerHTML = '';
-      userSessions.forEach((session, index) => {
-        const row = document.createElement('tr');
-        row.className = 'log-row';
-        let duration = 'Active';
-        if (session.logoutTime) {
-          const diffMs = new Date(session.logoutTime) - new Date(session.loginTime);
-          const diffMins = Math.round(diffMs / 60000);
-          duration = `${diffMins} min`;
-        }
-        row.innerHTML = `<td><input type="checkbox" class="log-checkbox" onchange="toggleLogSelection(${index}, this.checked)"></td>
-          <td>${session.userName}</td>
-          <td>${new Date(session.loginTime).toLocaleString()}</td>
-          <td>${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}</td>
-          <td>${duration}</td>
-          <td>${session.searchCount || 0}</td>
-          <td>${session.lastSearch || 'None'}</td>`;
-        logTable.appendChild(row);
-      });
-    }
-    
-    function toggleLogSelection(index, checked) {
-      if (checked) selectedLogs.add(index);
-      else selectedLogs.delete(index);
-      updateSelectedLogsDisplay();
-    }
-    
-    function toggleSelectAllLogs(checked) {
-      const checkboxes = document.querySelectorAll('.log-checkbox');
-      selectedLogs.clear();
-      checkboxes.forEach((checkbox, index) => {
-        checkbox.checked = checked;
-        if (checked) selectedLogs.add(index);
-      });
-      updateSelectedLogsDisplay();
-    }
-    
-    function updateSelectedLogsDisplay() {
-      const selectedCount = document.getElementById('selectedCount');
-      const deleteSelectedContainer = document.getElementById('deleteSelectedContainer');
-      selectedCount.textContent = selectedLogs.size;
-      if (selectedLogs.size > 0) deleteSelectedContainer.classList.remove('hidden');
-      else deleteSelectedContainer.classList.add('hidden');
-    }
-    
-    function deleteSelectedLogs() {
-      if (selectedLogs.size === 0) {
-        alert("No logs selected for deletion"); return;
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function() {
+      if (activeFilterDropdown) {
+        activeFilterDropdown.classList.remove('show');
+        activeFilterDropdown = null;
       }
-      if (!confirm(`Are you sure you want to delete ${selectedLogs.size} selected log(s)? This action cannot be undone.`)) return;
-      const indicesToDelete = Array.from(selectedLogs).sort((a, b) => b - a);
-      indicesToDelete.forEach(index => userSessions.splice(index, 1));
-      selectedLogs.clear();
-      saveUserData();
-      updateAdminLogsTable();
-      updateSelectedLogsDisplay();
-      alert(`${indicesToDelete.length} log(s) deleted successfully`);
-    }
-    
-    function showDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.remove('hidden');
-    }
-    
-    function hideDeleteConfirmation() {
-      document.getElementById('deleteConfirmation').classList.add('hidden');
-      document.getElementById('deletePassword').value = '';
-    }
-    
-    function exportUserLogs() {
-      let logText = "User Activity Logs\nGenerated: " + new Date().toLocaleString() + "\n\n";
-      userSessions.forEach(session => {
-        logText += `User: ${session.userName}\nLogin Time: ${new Date(session.loginTime).toLocaleString()}\nLogout Time: ${session.logoutTime ? new Date(session.logoutTime).toLocaleString() : 'Active'}\nDuration: ${session.logoutTime ? Math.round((new Date(session.logoutTime) - new Date(session.loginTime)) / 60000) + ' min' : 'Active'}\nSearch Count: ${session.searchCount || 0}\nLast Search: ${session.lastSearch || 'None'}\n----------------------------------------\n`;
-      });
-      const blob = new Blob([logText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'user_logs.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-    
-    function updateFileNicknameManager() {
-      const manager = document.getElementById('fileNicknameManager');
-      manager.innerHTML = '';
-      availableFiles.forEach(file => {
-        const fileDiv = document.createElement('div');
-        fileDiv.className = 'file-nickname';
-        fileDiv.innerHTML = `<label for="nickname-${file.name}">${file.name}:</label>
-          <input type="text" id="nickname-${file.name}" value="${fileNicknames[file.name] || file.name}" placeholder="Enter nickname for ${file.name}">`;
-        manager.appendChild(fileDiv);
-      });
-    }
-    
-    function saveFileNicknames() {
-      availableFiles.forEach(file => {
-        const nicknameInput = document.getElementById(`nickname-${file.name}`);
-        if (nicknameInput) fileNicknames[file.name] = nicknameInput.value.trim() || file.name;
-      });
-      saveUserData();
-      updateFileSelect();
-    }
-    
-    function resetFileNicknames() {
-      availableFiles.forEach(file => {
-        const simpleName = file.name.replace('.xlsx', '').replace('.xls', '').replace('.csv', '').replace('.pdf', '').replace(/_/g, ' ');
-        fileNicknames[file.name] = simpleName;
-      });
-      saveUserData();
-      updateFileSelect();
-      updateFileNicknameManager();
-    }
-    
-    function logUserActivity(activity) {
-      searchLogs.push({ user: currentUserName || 'Unknown', activity: activity, timestamp: new Date().toISOString() });
-      if (searchLogs.length > 1000) searchLogs = searchLogs.slice(-1000);
-      saveUserData();
-    }
-    
-    function checkMobileDevice() {
-      isMobileView = window.innerWidth <= 768;
-      updateMobileView();
-    }
-    
-    function toggleMobileView() {
-      isMobileView = !isMobileView;
-      updateMobileView();
-      document.getElementById('mobileViewToggle').textContent = isMobileView ? "🖥️ Desktop View" : "📱 Mobile View";
-    }
-    
-    function updateMobileView() {
-      if (isMobileView) document.body.classList.add('mobile-view');
-      else document.body.classList.remove('mobile-view');
-    }
-    
-    function handleExportClick(type) {
-      if (currentResults.length === 0) {
-        alert("No data to export. Please perform a search first."); return;
-      }
-      currentExportType = type;
-      showExportPreview(type);
-    }
-    
-    function showExportPreview(type) {
+    });
+
+    // Close export modal when clicking outside
+    window.onclick = function(event) {
       const modal = document.getElementById('exportModal');
-      const previewType = document.getElementById('previewType');
-      const previewMessage = document.getElementById('previewMessage');
-      const previewTableContainer = document.getElementById('previewTableContainer');
-      const confirmExportBtn = document.getElementById('confirmExportBtn');
-      previewType.textContent = type.toUpperCase();
-      previewMessage.textContent = `Preview of data to be exported (${currentResults.length} rows):`;
-      let previewHTML = `<table border="1" style="border-collapse: collapse; width: 100%;">`;
-      const columns = Object.keys(currentResults[0]).filter(col => 
-        !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false
-      );
-      previewHTML += `<tr><th style="padding: 6px; background-color: #f0f0f0;">S/N</th><th style="padding: 6px; background-color: #f0f0f0;">Source File</th>`;
-      columns.forEach(col => previewHTML += `<th style="padding: 6px; background-color: #f0f0f0;">${col}</th>`);
-      previewHTML += `</tr>`;
-      const previewRows = currentResults.slice(0, 10);
-      previewRows.forEach((row, index) => {
-        previewHTML += `<tr><td style="padding: 6px;">${index + 1}</td><td style="padding: 6px;">${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
-        columns.forEach(col => previewHTML += `<td style="padding: 6px;">${row[col] || ''}</td>`);
-        previewHTML += `</tr>`;
-      });
-      previewHTML += `</table>`;
-      if (currentResults.length > 10) previewHTML += `<p style="text-align: center; margin-top: 8px;">... and ${currentResults.length - 10} more rows</p>`;
-      previewTableContainer.innerHTML = previewHTML;
-      confirmExportBtn.onclick = function() { executeExport(type); closeExportPreview(); };
-      modal.style.display = 'block';
-    }
-    
-    function closeExportPreview() {
-      document.getElementById('exportModal').style.display = 'none';
-      currentExportType = null;
-    }
-    
-    function executeExport(type) {
-      switch(type) {
-        case 'excel': exportToExcel(); break;
-        case 'pdf': exportToPDF(); break;
-        case 'csv': exportToCSV(); break;
-        case 'print': printResults(); break;
+      if (event.target === modal) {
+        closeExportPreview();
       }
-    }
-    
-    function exportToExcel() {
-      const exportData = currentResults.map((row, index) => {
-        const { highlights, __sourceFile, __sheetName, ...data } = row;
-        const filteredData = {};
-        Object.keys(data).forEach(key => { if (columnVisibility[key] !== false) filteredData[key] = data[key]; });
-        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
-      });
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Search Results");
-      XLSX.writeFile(wb, "search_results.xlsx");
-    }
-    
-    function exportToPDF() {
-      const exportData = currentResults.map((row, index) => {
-        const { highlights, __sourceFile, __sheetName, ...data } = row;
-        const filteredData = {};
-        Object.keys(data).forEach(key => { if (columnVisibility[key] !== false) filteredData[key] = data[key]; });
-        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
-      });
-      const headers = Object.keys(exportData[0]);
-      const body = exportData.map(row => headers.map(header => String(row[header] || '')));
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text('Search Results', 14, 15);
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
-      doc.text(`Total records: ${exportData.length}`, 14, 28);
-      doc.autoTable({ head: [headers], body: body, startY: 35, styles: { fontSize: 8 }, headStyles: { fillColor: [52, 152, 219] } });
-      doc.save('search_results.pdf');
-    }
-    
-    function exportToCSV() {
-      const exportData = currentResults.map((row, index) => {
-        const { highlights, __sourceFile, __sheetName, ...data } = row;
-        const filteredData = {};
-        Object.keys(data).forEach(key => { if (columnVisibility[key] !== false) filteredData[key] = data[key]; });
-        return { 'S/N': index + 1, 'Source File': fileNicknames[__sourceFile] || __sourceFile, ...filteredData };
-      });
-      const headers = Object.keys(exportData[0]);
-      const csvContent = [headers.join(','), ...exportData.map(row => headers.map(header => {
-        const value = row[header]; return typeof value === 'string' && (value.includes(',') || value.includes('"')) ? `"${value.replace(/"/g, '""')}"` : value;
-      }).join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'search_results.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-    
-    function printResults() {
-      const printWindow = window.open('', '_blank');
-      const columns = Object.keys(currentResults[0]).filter(col => !col.startsWith('__') && col !== 'highlights' && columnVisibility[col] !== false);
-      let printHTML = `<html><head><title>Search Results</title><style>
-        body { font-family: Arial, sans-serif; margin: 15px; } table { border-collapse: collapse; width: 100%; margin-top: 8px; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; } th { background-color: #f2f2f2; }
-        @media print { body { margin: 0; } table { page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } }
-      </style></head><body><h1>Search Results</h1><p>Generated: ${new Date().toLocaleString()}</p><p>Total Results: ${currentResults.length}</p><table><thead><tr><th>S/N</th><th>Source File</th>`;
-      columns.forEach(col => printHTML += `<th>${col}</th>`);
-      printHTML += `</tr></thead><tbody>`;
-      currentResults.forEach((row, index) => {
-        printHTML += `<tr><td>${index + 1}</td><td>${fileNicknames[row.__sourceFile] || row.__sourceFile}</td>`;
-        columns.forEach(col => printHTML += `<td>${row[col] || ''}</td>`);
-        printHTML += `</tr>`;
-      });
-      printHTML += `</tbody></table></body></html>`;
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
-    
-    window.onload = async function() {
-      document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-      loadUserData();
-      loadCustomizationSettings(); // Load customization settings
-      document.getElementById('searchInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') performSearch(); });
-      document.getElementById('userName').addEventListener('keypress', function(e) { if (e.key === 'Enter') setUserName(); });
-      document.getElementById('adminPass').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkAdminLogin(); });
-      document.querySelectorAll('input[name="searchType"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-          let hint = "";
-          switch(this.value) {
-            case "contains": hint = "Search for text that contains your keywords"; break;
-            case "exact": hint = "Search for exact matches of your keywords"; break;
-            case "startsWith": hint = "Search for text that starts with your keywords"; break;
-            case "endsWith": hint = "Search for text that ends with your keywords"; break;
-          }
-          document.getElementById('searchInput').placeholder = hint;
-        });
-      });
-      checkMobileDevice();
-      await loadFilesFromGitHub();
-      window.addEventListener('resize', function() { checkMobileDevice(); });
     };
   </script>
 </body>
